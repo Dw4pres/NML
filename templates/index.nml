@@ -1,0 +1,22 @@
+doctype.html
+html
+    head
+    title("NML Server Test")
+    // We can link to a CDN like Tailwind
+    script.src("https://cdn.tailwindcss.com")
+
+    body.class("bg-gray-900 text-white flex items-center justify-center min-h-screen")
+        div.class("text-center p-8 bg-gray-800 rounded-lg shadow-xl")
+            
+            h1.class("text-5xl font-bold text-blue-400")
+                | It Works, {{ username }}!
+            
+            p.class("text-2xl mt-4 text-gray-300")
+                | This page was compiled from 
+                strong.class("text-blue-300")
+                    | .nml
+                |  in real-time!
+            
+            p.class("mt-6")
+                a.href("/login").class("text-xl text-green-400 hover:underline")
+                    | View the Login Page Example ->
