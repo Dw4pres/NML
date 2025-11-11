@@ -62,10 +62,48 @@ Phase 4: Full-Fledged Framework (NML-Core) (Done)
 
 [x] Base Class Injection: Server intelligently finds the first class in the @style: block (e.g., .pixel-button) and automatically adds it to the component's root element.
 
-Phase 5: Future Ideas
+Recent Additions (Done)
+
+[x] 4.3: Templating Enhancements
+
+[x] Named Slots: Support `@slot.name` with fallback content in components and from call sites.
+
+[x] Props: Call-site attributes available inside components via `{{ prop.* }}` for text and attributes.
+
+[x] 4.4: HTML Safety & Compatibility
+
+[x] Default Escaping: Variables are escaped by default with `{{ var }}`; `{{ var|raw }}` opt-out.
+
+[x] Expanded HTML Support: Added more void elements (area/base/col/embed/param/source/track/wbr) and boolean attributes (async/defer/multiple/autofocus/novalidate/etc.).
+
+[x] 4.5: CLI & Developer Experience
+
+[x] CLI Flags: `--components <path>` and optional config discovery via `nml.config.json`.
+
+[x] Watch Mode: `--watch` to rebuild on changes without extra dependencies.
+
+[x] 4.6: CSS Scoping Improvements
+
+[x] Deterministic Scope IDs: Stable `nml-c-xxxxxx` based on component name and style content.
+
+[x] Inject Used Styles Only: Dev server injects scoped CSS only for components present on the page.
+
+[x] 4.7: Quality & CI
+
+[x] Tests: Added tests for escaping, extended HTML support, CLI with components, deterministic IDs, used-style detection, named slots, and props.
+
+[x] CI: GitHub Actions workflow to run pytest on push/PR.
+
+Phase 5: Current Work & Future Ideas
+
+[x] 5.1: File-Based Routing in Dev Server: Map `templates/about.nml` → `/about`, nested folders, and dynamic segments like `templates/users/[id].nml` → `/users/<id>` with 404 fallback.
+
+[ ] 5.2: Minimal Client State: Optional tiny runtime for trivial state. (Events done via `on:*` attributes.)
+
+[x] 5.3: Packaging & CLI: `pyproject.toml` and an `nmlc` console script; README updates.
 
 [ ] Routing: A built-in routing system (e.g., file-based routing where templates/about.nml auto-maps to /about).
 
 [ ] State Management: A simple, built-in way to handle client-side state.
 
-[ ] Event Handling: A syntax for client-side events (e.g., button.on:click("myFunction")).
+[x] Event Handling: A syntax for client-side events (e.g., `button.on:click("myFunction")`).

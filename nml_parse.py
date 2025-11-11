@@ -1,6 +1,8 @@
 import re
 import copy # Needed for deep copying component ASTs
 import uuid # For generating unique scope IDs
+import hashlib
+from markupsafe import escape
 
 # --- Custom Error for User-Friendly Feedback ---
 class NMLParserError(Exception):
@@ -9,21 +11,70 @@ class NMLParserError(Exception):
 
 # --- Constants ---
 INDENT_WIDTH = 4
-VOID_ELEMENTS = {"meta", "link", "input", "img", "br", "hr"}
-KNOWN_BOOLEAN_ATTRIBUTES = {"crossorigin", "disabled", "readonly", "checked", "selected", "autoplay", "controls", "loop", "muted", "playsinline", "required"}
+VOID_ELEMENTS = {
+    "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"
+}
+KNOWN_BOOLEAN_ATTRIBUTES = {
+    "async", "autofocus", "autoplay", "checked", "controls", "crossorigin", "defer", "disabled", "formnovalidate",
+    "hidden", "itemscope", "loop", "muted", "nomodule", "novalidate", "open", "playsinline", "readonly", "required", "reversed", "selected", "multiple"
+}
+MERGEABLE_ATTRS = {
+    "id", "type", "href", "src", "alt", "title", "value", "name", "placeholder", "role", "rel", "target", "for"
+}
+
+def _is_mergeable_attr(key: str) -> bool:
+    if key == "class":
+        return True
+    # Allow HTML event handler attributes (onclick, oninput, ...)
+    if key.startswith("on"):
+        return True
+    if key in KNOWN_BOOLEAN_ATTRIBUTES or key in MERGEABLE_ATTRS:
+        return True
+    # Allow data- and aria- attributes to pass through to HTML
+    if key.startswith("data-") or key.startswith("aria-"):
+        return True
+    return False
 
 # --- Variable Rendering Helper ---
 def _render_variables(text: str, context: dict) -> str:
-    """Replaces {{ var }} placeholders with values from the context."""
+    """Replaces {{ var }} placeholders with values from the context. Escapes by default; supports {{ var|raw }} and dot paths like {{ a.b }}."""
     if context is None:
         return text
-        
-    def replacer(match):
-        key = match.group(1)
-        # Return the value, or the original tag if not found
-        return str(context.get(key, f"{{{{ {key} }}}}"))
 
-    return re.sub(r"{{\s*(.*?)\s*}}", replacer, text)
+    pattern = r"{{\s*(.*?)\s*}}"
+
+    def _resolve(path: str, ctx: dict):
+        cur = ctx
+        for part in path.split('.'):
+            if isinstance(cur, dict) and part in cur:
+                cur = cur[part]
+            else:
+                return None, False
+        return cur, True
+
+    def replacer(match):
+        original = match.group(0)
+        expr = match.group(1).strip()
+        parts = [p.strip() for p in expr.split("|")]
+        key = parts[0] if parts else ""
+        filters = set(parts[1:]) if len(parts) > 1 else set()
+
+        value = None
+        found = False
+        if context is not None and key:
+            # support dotted lookup
+            if '.' in key:
+                value, found = _resolve(key, context)
+            else:
+                found = key in context
+                value = context.get(key)
+        if not found:
+            return original
+        if "raw" in filters:
+            return str(value)
+        return str(escape(str(value)))
+
+    return re.sub(pattern, replacer, text)
 
 # --- Attribute Merging Helper ---
 def _merge_attributes(base_attrs: dict, override_attrs: dict) -> dict:
@@ -59,22 +110,28 @@ def _merge_attributes(base_attrs: dict, override_attrs: dict) -> dict:
     return merged
 
 # --- Slot Injection Helper ---
-def _inject_slot(component_ast: list[dict], slot_content: list[dict]) -> list[dict]:
+def _inject_slot(component_ast: list[dict], slots: dict) -> list[dict]:
     """
-    Recursively finds the @slot node in a component's AST
-    and replaces it with the slot_content (the children).
+    Recursively finds @slot nodes in a component's AST and replaces them
+    with provided slot content. Supports named slots via the 'name' attribute.
+    Default slot uses key None.
     """
     injected_ast = []
     for node in component_ast:
         if node.get("element") == "@slot":
-            # Found the slot! Inject the content and stop.
-            injected_ast.extend(slot_content)
+            slot_name = node.get("attributes", {}).get("name")
+            # Default slot is mapped under None
+            content = slots.get(slot_name) if slot_name is not None else slots.get(None)
+            if content is None or len(content) == 0:
+                # Fallback: preserve any children defined inside the slot
+                fallback_children = node.get("children", [])
+                injected_ast.extend(fallback_children)
+            else:
+                injected_ast.extend(content)
         else:
-            # Not a slot, so keep the node
             new_node = node.copy() # Shallow copy is fine
             if new_node.get("children"):
-                # Recurse to find slots in children
-                new_node["children"] = _inject_slot(new_node["children"], slot_content)
+                new_node["children"] = _inject_slot(new_node["children"], slots)
             injected_ast.append(new_node)
     return injected_ast
     
@@ -158,10 +215,14 @@ def parse_line(line: str) -> dict | None:
             "content": "", "children": [], "multiline_trigger": False, "multiline_content": []
         }
         
-    # Handle Component Slot (@slot)
-    if line == "@slot":
+    # Handle Component Slot (@slot or @slot.name)
+    if line.startswith("@slot"):
+        name = None
+        if line.startswith("@slot."):
+            name = line[len("@slot."):].strip()
+        attrs = {"name": name} if name else {}
         return {
-            "element": "@slot", "attributes": {}, "content": "", "children": [],
+            "element": "@slot", "attributes": attrs, "content": "", "children": [],
             "multiline_trigger": False, "multiline_content": []
         }
         
@@ -198,7 +259,7 @@ def parse_line(line: str) -> dict | None:
     attributes = {}
     content_args = []
     
-    element_match = re.match(r'([\w-]+)\((.*)\)$', element)
+    element_match = re.match(r'([\w:-]+)\((.*)\)$', element)
     if element_match:
         element = element_match.group(1)
         args_str = element_match.group(2)
@@ -210,9 +271,12 @@ def parse_line(line: str) -> dict | None:
     for part in parts[1:]:
         if not part: continue 
 
-        match = re.match(r'([\w-]+)\((.*)\)$', part)
+        match = re.match(r'([\w:-]+)\((.*)\)$', part)
         if match:
             attr_name = match.group(1)
+            # Map event attributes like on:click -> onclick
+            if attr_name.startswith("on:"):
+                attr_name = "on" + attr_name.split(":", 1)[1]
             args_str = match.group(2)
             parsed_args = re.findall(r'"(.*?)"', args_str)
             
@@ -373,7 +437,14 @@ def _expand_components_pass(ast: list[dict], components: dict, global_styles: di
             component_name = node.get("attributes", {}).get("class")
             if component_name:
                 # --- NEW: Process for @style ---
-                scope_id = f"nml-c-{uuid.uuid4().hex[:6]}"
+                style_raw = ""
+                for child in node.get("children", []):
+                    if child.get("element") == "@style":
+                        style_raw = "\n".join(child.get("multiline_content", []))
+                        break
+                to_hash = f"{component_name}|{style_raw}"
+                digest = hashlib.sha1(to_hash.encode("utf-8")).hexdigest()[:6]
+                scope_id = f"nml-c-{digest}"
                 
                 # 1. Extract the style, get back the cleaned AST
                 component_ast, scoped_css = _extract_scoped_style(node.get("children", []), scope_id)
@@ -396,15 +467,44 @@ def _expand_components_pass(ast: list[dict], components: dict, global_styles: di
             if component_name in components:
                 component_template_ast = copy.deepcopy(components[component_name])
                 
-                slot_content = _expand_components_pass(node.get("children", []), components, global_styles)
+                # Collect default and named slot content from call-site
+                default_children: list[dict] = []
+                named_slots: dict = {}
+                for child in node.get("children", []):
+                    if child.get("element") == "@slot":
+                        slot_name = child.get("attributes", {}).get("name")
+                        expanded = _expand_components_pass(child.get("children", []), components, global_styles)
+                        if slot_name in named_slots:
+                            named_slots[slot_name].extend(expanded)
+                        else:
+                            named_slots[slot_name] = expanded
+                    else:
+                        # Expand normal children (default slot)
+                        expanded_list = _expand_components_pass([child], components, global_styles)
+                        default_children.extend(expanded_list)
+                slots = {None: default_children}
+                slots.update(named_slots)
                 
-                injected_ast = _inject_slot(component_template_ast, slot_content)
+                injected_ast = _inject_slot(component_template_ast, slots)
+                # Recursively expand nested component calls within the injected AST
+                if injected_ast:
+                    injected_ast = _expand_components_pass(injected_ast, components, global_styles)
                 
                 if injected_ast:
                     base_node = injected_ast[0]
                     base_attrs = base_node.get("attributes", {})
                     override_attrs = node.get("attributes", {})
-                    base_node["attributes"] = _merge_attributes(base_attrs, override_attrs)
+                    # Merge only allowed attributes into HTML (class, known boolean, whitelisted, data-/aria-)
+                    merge_overrides = {}
+                    for k, v in override_attrs.items():
+                        if _is_mergeable_attr(k):
+                            merge_overrides[k] = v
+                    base_node["attributes"] = _merge_attributes(base_attrs, merge_overrides) if merge_overrides else base_attrs
+                    # Remaining attributes are treated as props for internal usage
+                    props_dict = {k: v for k, v in override_attrs.items() if not _is_mergeable_attr(k)}
+                    if props_dict:
+                        # Attach a node-level context override consumed by generate_html
+                        base_node["__context__"] = {"prop": props_dict}
                 
                 expanded_ast.extend(injected_ast)
                 
@@ -432,8 +532,16 @@ def generate_html(ast: list[dict], indent_level: int = 0, context: dict = None) 
     indent = " " * (indent_level * INDENT_WIDTH)
 
     for node in ast:
+        # Merge node-level context overrides (e.g., component props)
+        node_context = context
+        node_ctx_override = node.get("__context__")
+        if node_ctx_override:
+            merged = context.copy() if isinstance(context, dict) else {}
+            merged.update(node_ctx_override)
+            node_context = merged
+
         if node["element"] == "__text__":
-            html += f"{indent}{_render_variables(node.get('content', ''), context)}\n"
+            html += f"{indent}{_render_variables(node.get('content', ''), node_context)}\n"
             continue
             
         if node["element"] in ["@define", "@slot", "@style"]:
@@ -450,12 +558,12 @@ def generate_html(ast: list[dict], indent_level: int = 0, context: dict = None) 
             if value is True:
                 attr_string += f" {key}" # Boolean attribute
             else:
-                rendered_value = _render_variables(str(value), context)
+                rendered_value = _render_variables(str(value), node_context)
                 attr_string += f' {key}="{rendered_value}"'
         
         html += f"{indent}<{tag}{attr_string}"
         
-        content = _render_variables(node.get("content", ""), context)
+        content = _render_variables(node.get("content", ""), node_context)
         children = node.get("children", [])
         multiline = node.get("multiline_content", [])
         
@@ -468,13 +576,17 @@ def generate_html(ast: list[dict], indent_level: int = 0, context: dict = None) 
         if content:
             html += content
         elif children:
-            html += "\n"
-            html += generate_html(children, indent_level + 1, context)
-            html += f"{indent}"
+            # Inline single text child without newlines for cleaner HTML
+            if len(children) == 1 and children[0].get("element") == "__text__":
+                html += _render_variables(children[0].get("content", ""), node_context)
+            else:
+                html += "\n"
+                html += generate_html(children, indent_level + 1, node_context)
+                html += f"{indent}"
         elif multiline:
             html += "\n"
             for line in multiline:
-                html += f"{indent}    {_render_variables(line, context)}\n"
+                html += f"{indent}    {_render_variables(line, node_context)}\n"
             html += f"{indent}"
 
         html += f"</{tag}>\n"

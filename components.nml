@@ -5,7 +5,7 @@
     // The root tag, with its base class
     div.pixel-box-raised
     
-        // The slot, as a SIBLING
+        // The slot, as a CHILD
         @slot
 
         // The style block, as a SIBLING
@@ -30,7 +30,7 @@
     // The root tag, with its base class
     button.type("button").pixel-button
     
-        // The slot, as a SIBLING
+        // The slot, as a CHILD
         @slot
 
 // The style block, as a SIBLING
@@ -56,8 +56,7 @@
             .pixel-button:active,
             .pixel-button.active {
                 background-color: #1e293b;
-                border-color: #1e293b #64748b #64748b #1e2imgb;
+                border-color: #1e293b #64748b #64748b #1e293b;
                 box-shadow: inset 2px 2px 0 #0f172a;
                 transform: translate(2px, 2px);
             }        
-        

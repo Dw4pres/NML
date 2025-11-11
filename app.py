@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, make_response
+from flask import Flask, render_template_string
 from nml_parse import build_ast, generate_html, NMLParserError, _find_component_root_node
 import os
 import re
@@ -9,18 +9,78 @@ app = Flask(__name__)
 COMPONENTS = {}
 GLOBAL_STYLES = {} # This will store our scoped CSS
 
+COMPONENTS_FILE = 'components.nml'
+LAST_COMPONENTS_MTIME = None
+
+def maybe_reload_components():
+    global LAST_COMPONENTS_MTIME
+    try:
+        mtime = os.path.getmtime(COMPONENTS_FILE)
+    except OSError:
+        mtime = None
+    if mtime is not None and mtime != LAST_COMPONENTS_MTIME:
+        load_components()
+
+# --- Routing helpers (Phase 5.1) ---
+def resolve_template_path(req_path: str, base_dir: str = 'templates') -> tuple[str | None, dict]:
+    """
+    Resolve a URL path to a template name relative to base_dir and params.
+    Rules:
+    - '/' -> 'index.nml' if exists
+    - '/a/b' -> 'a/b.nml' if exists
+    - '/a/b/' -> 'a/b/index.nml' if exists
+    - Dynamic last segment: '/a/123' -> 'a/[id].nml' if such a file exists; returns {'id': '123'}
+    Returns (template_name, params) or (None, {}).
+    """
+    # Normalize
+    path = req_path.strip('/')
+    # Root
+    if path == "":
+        index_path = os.path.join(base_dir, 'index.nml')
+        if os.path.exists(index_path):
+            return ('index.nml', {})
+        return (None, {})
+
+    segments = path.split('/')
+    # 1) Direct file
+    direct_rel = os.path.join(*segments) + '.nml'
+    direct_abs = os.path.join(base_dir, direct_rel)
+    if os.path.exists(direct_abs):
+        return (direct_rel.replace('\\', '/'), {})
+    # 2) Directory index
+    dir_abs = os.path.join(base_dir, *segments)
+    index_abs = os.path.join(dir_abs, 'index.nml')
+    if os.path.isdir(dir_abs) and os.path.exists(index_abs):
+        rel = os.path.join(*segments, 'index.nml')
+        return (rel.replace('\\', '/'), {})
+    # 3) Dynamic last segment [param].nml in parent dir
+    if len(segments) >= 1:
+        parent_abs = os.path.join(base_dir, *segments[:-1]) if len(segments) > 1 else base_dir
+        last = segments[-1]
+        try:
+            for fname in os.listdir(parent_abs):
+                # match [name].nml
+                if fname.startswith('[') and fname.endswith('].nml') and os.path.isfile(os.path.join(parent_abs, fname)):
+                    param = fname[1:-5]  # strip '[' and '].nml'
+                    rel = os.path.join(*(segments[:-1] + [fname]))
+                    return (rel.replace('\\', '/'), {param: last})
+        except FileNotFoundError:
+            pass
+    return (None, {})
+
 def load_components():
     """
     Loads and parses the components.nml file on startup.
     This new version also handles @style blocks.
     """
-    global COMPONENTS, GLOBAL_STYLES
+    global COMPONENTS, GLOBAL_STYLES, LAST_COMPONENTS_MTIME
     COMPONENTS = {}
     GLOBAL_STYLES = {}
     
     try:
-        with open('components.nml', 'r') as f:
+        with open(COMPONENTS_FILE, 'r') as f:
             nml_text = f.read()
+        LAST_COMPONENTS_MTIME = os.path.getmtime(COMPONENTS_FILE)
     except FileNotFoundError:
         print("WARNING: components.nml not found. No components will be loaded.")
         return
@@ -67,8 +127,6 @@ def load_components():
     except Exception as e:
         print(f"An unexpected error occurred during component loading: {e}")
 
-
-# --- THIS IS THE FIX ---
 # We call this *once* at the top level.
 # This ensures it runs in the worker process, not just the reloader.
 load_components()
@@ -79,6 +137,7 @@ def render_nml_template(template_name, **context):
     Our main NML template renderer.
     It now also injects all loaded component styles.
     """
+    maybe_reload_components()
     template_path = os.path.join('templates', template_name)
     
     try:
@@ -96,17 +155,30 @@ def render_nml_template(template_name, **context):
         # We pass the context to generate_html!
         html_output = generate_html(ast, context=context)
         
-        # --- NEW: Inject Scoped CSS ---
-        if GLOBAL_STYLES:
-            all_styles = "\n".join(GLOBAL_STYLES.values())
-            style_tag = f"<style data-nml-scoped-styles>\n{all_styles}\n</style>"
-            
-            # Inject just before the closing </head> tag
-            if "</head>" in html_output:
-                html_output = html_output.replace("</head>", f"{style_tag}\n</head>", 1)
-            else:
-                # Fallback: just append to the start (for simple tests)
-                html_output = style_tag + html_output
+        # --- NEW: Inject Scoped CSS (only used components) ---
+        def _collect_scope_ids(nodes):
+            ids = set()
+            def walk(items):
+                for n in items:
+                    attrs = n.get("attributes", {})
+                    for k in attrs.keys():
+                        if isinstance(k, str) and k.startswith("nml-c-"):
+                            ids.add(k)
+                    if n.get("children"):
+                        walk(n["children"])
+            walk(nodes)
+            return ids
+
+        used_ids = _collect_scope_ids(ast)
+        if used_ids:
+            used_styles = [GLOBAL_STYLES[sid] for sid in used_ids if sid in GLOBAL_STYLES]
+            if used_styles:
+                all_styles = "\n".join(used_styles)
+                style_tag = f"<style data-nml-scoped-styles>\n{all_styles}\n</style>"
+                if "</head>" in html_output:
+                    html_output = html_output.replace("</head>", f"{style_tag}\n</head>", 1)
+                else:
+                    html_output = style_tag + html_output
                 
         return render_template_string(html_output)
         
@@ -118,18 +190,17 @@ def render_nml_template(template_name, **context):
         return f"An unexpected error occurred: {e}", 500
 
 # --- Routes ---
-@app.route('/')
-def home():
-    # Pass data into our template
-    context = {
-        "username": "NML Developer"
-    }
-    return render_nml_template('index.nml', **context)
-
-@app.route('/login')
-def login():
-    # This page doesn't need context, so we pass an empty dict
-    return render_nml_template('login-page.nml')
+@app.route('/', defaults={'req_path': ''})
+@app.route('/<path:req_path>')
+def serve(req_path: str):
+    (template_rel, params) = resolve_template_path(req_path)
+    if not template_rel:
+        # Try a 404 template if present
+        not_found_rel, _ = (('404.nml', {}) if os.path.exists(os.path.join('templates', '404.nml')) else (None, {}))
+        if not_found_rel:
+            return render_nml_template(not_found_rel, path='/' + req_path)
+        return (f"Not found: /{req_path}", 404)
+    return render_nml_template(template_rel, **params)
 
 if __name__ == '__main__':
     # We no longer call load_components() here
@@ -142,4 +213,4 @@ if __name__ == '__main__':
     # We add `use_reloader=True` to watch for file changes,
     # but `reloader_type="stat"` is a simple way to do it.
     # Flask's reloader will also reload if components.nml changes!
-    app.run(host='192.168.1.29', port=5173, debug=True, use_reloader=True)
+    app.run(host='127.0.0.1', port=5173, debug=True, use_reloader=True)

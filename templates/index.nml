@@ -1,10 +1,9 @@
 doctype.html
 html
     head
-    title("NML Server Test")
-    // We can link to a CDN like Tailwind
-    script.src("https://cdn.tailwindcss.com")
-
+        title("NML Server Test")
+        // We can link to a CDN like Tailwind
+        script.src("https://cdn.tailwindcss.com")
     body.class("bg-gray-900 text-white flex items-center justify-center min-h-screen")
         div.class("text-center p-8 bg-gray-800 rounded-lg shadow-xl")
             
