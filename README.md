@@ -15,41 +15,215 @@
  - Event attributes: `on:click("...")` → `onclick="..."` (and other `on:*`)
  - Strong tests and GitHub Actions CI
 
- ## Requirements
+## Why NML
+
+- Write less boilerplate than HTML/CSS while staying close to the platform.
+- Component-first authoring with named slots and simple props.
+- Server-rendered by default; no heavy client framework or bundler required.
+- Scoped CSS per component, injected only if used.
+- File-based routing in the dev server for natural folder-to-URL mapping.
+- Optional, tiny runtime for trivial client state when you need it.
+
+## Why not a heavy JS framework?
+
+- Less moving parts. No bundler, no VDOM, no hydration. You write NML → it becomes HTML.
+- Server-first by default. Pages render instantly and work without JavaScript.
+- Interactivity stays simple. Use native events (`on:*`) or an optional ~tiny helper for state.
+- CSS scoping without CSS-in-JS. Styles are deterministic and only injected when used.
+- Adopt incrementally. Works alongside existing Python/Flask projects without a Node toolchain.
+
+## How interactivity works (no framework)
+
+- Native HTML first. Forms, links, `<details>`/`<summary>`, and CSS do a lot without JS.
+- One-line events. `on:click("...")` simply maps to `onclick="..."`. No bundler or build step.
+- Optional tiny runtime. Include `/static/nml_runtime.js` only when you need state:
+  - `nml('set path value')`, `nml('inc path [amount]')`, `nml('toggle path')`
+  - Bind text/values with `data-nml-bind` (e.g., `text:counter.count`)
+  - This is “JS-like” because it is JS under the hood—just minimal and opt‑in.
+
+## Philosophy & Design Principles
+
+- Prefer server-rendered HTML; enhance progressively.
+- Prefer native browser features (links, forms, details/summary) over custom JS.
+- Components are simple functions of input → HTML, with named slots for composition.
+- Styles are local to components via deterministic scoping.
+- Keep runtime optional and tiny; no bundlers or hydration.
+
+## Common tasks by example
+
+- **Navigate** (no JS needed)
+
+  ```
+  a.href("/profile").class("link")
+    | Go to Profile
+  ```
+
+- **Show/hide content** (use native details/summary)
+
+  ```
+  details
+    summary("More info")
+    p("Hidden by default, shown when expanded.")
+  ```
+
+- **Submit a form** (server handles POST)
+
+  ```
+  form.method("post").action("/signup")
+    input.type("text").name("email")
+    button.type("submit")
+      | Sign Up
+  ```
+
+- **Client action without building** (inline event)
+
+  ```
+  button.on:click("location.href='/settings'")
+    | Settings
+  ```
+
+## When to use the tiny runtime
+
+- You need a simple counter, toggle, or input binding without a full framework.
+- You want to avoid a build step and keep JS to a few bytes.
+- Your features degrade gracefully (page still works if JS fails/disabled).
+
+## Requirements
 
  - Python 3.12+ (tested in CI). 3.14 validated locally.
  - `pip install -r requirements.txt`
 
- ## Quick start
+## Getting Started
 
- - Run dev server:
+1. Install dependencies
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Run the dev server
 
    ```bash
    python app.py
-   # open http://127.0.0.1:5173
    ```
 
- - Compile with CLI:
+   Open http://127.0.0.1:5173
 
-  ```bash
-  # install locally (editable) with dev extras
-  pip install -e .[dev]
+3. Explore the starter pages (located in `templates/`)
 
-  # compile using the console script
-  nmlc templates/login-page.nml out.html
+   - `/` → `templates/index.nml`
+   - `/users/123` → `templates/users/[id].nml` (dynamic param available as `{{ id }}`)
+   - `/counter` → optional minimal runtime demo (`/static/nml_runtime.js`)
 
-  # with explicit components file
-  nmlc templates/login-page.nml out.html --components components.nml
+4. Edit and build in NML
 
-  # watch for changes (input/components)
-  nmlc templates/login-page.nml out.html --watch
-  ```
+   - Author pages in `templates/*.nml`
+   - Define components in `components.nml` using `@define.Component` and call them with `@Component`
+   - Use slots (`@slot`, `@slot.name`) and props (`{{ prop.* }}`) inside components
 
- - Optional config file (`nml.config.json`):
+5. (Optional) Minimal client state
+
+   - Only if needed: include `/static/nml_runtime.js` and use `data-nml-bind` with simple `nml('set|inc|toggle ...')` commands
+   - See the section below for examples
+
+6. Compile with the CLI
+
+   ```bash
+   # install locally (editable) with dev extras
+   pip install -e .[dev]
+
+   # compile using the console script
+   nmlc templates/login-page.nml out.html
+
+   # with explicit components file
+   nmlc templates/login-page.nml out.html --components components.nml
+
+   # watch for changes (input/components)
+   nmlc templates/login-page.nml out.html --watch
+   ```
+
+7. (Optional) Config file (`nml.config.json`)
 
    ```json
    { "components": "components.nml" }
    ```
+
+## Quick Examples
+
+- **Hello, World (NML vs HTML)**
+
+  ```
+  // NML
+  h1("Hello, World")
+  ```
+
+  ```html
+  <!-- HTML -->
+  <h1>Hello, World</h1>
+  ```
+
+- **Define and use a component with slots and props**
+
+  ```
+  // components.nml
+  @define.Card
+    div.class("card")
+      div.class("header")
+        @slot.header
+      div.class("body")
+        @slot
+  ```
+
+  ```
+  // page.nml
+  @Card
+    @slot.header
+      h1("Title")
+    p("Body")
+  ```
+
+  Renders to:
+
+  ```html
+  <div class="card">
+    <div class="header"><h1>Title</h1></div>
+    <div class="body"><p>Body</p></div>
+  </div>
+  ```
+
+- **Routing: dynamic params in one file**
+
+  ```
+  // templates/users/[id].nml
+  p("User {{ id }}")
+  ```
+
+  Visit `/users/42` → `User 42`.
+
+- **Events in one line**
+
+  ```
+  button.on:click("alert('hi')")
+    | Click
+  ```
+
+  Renders to:
+
+  ```html
+  <button onclick="alert('hi')">Click</button>
+  ```
+
+- **Scoped CSS (automatic, only when used)**
+
+  ```
+  @define.Btn
+    button
+      @slot
+    @style:
+      .btn { color: blue; }
+  ```
+
+  The CSS is automatically scoped with a stable attribute and injected only if `@Btn` is used on the page.
 
  ## Routing (dev server)
 

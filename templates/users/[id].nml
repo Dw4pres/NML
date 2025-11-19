@@ -1,0 +1,6 @@
+doctype.html
+html.lang("en")
+    head
+        title("User {{ id }}")
+    body
+        h1("User {{ id }}")

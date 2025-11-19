@@ -98,7 +98,7 @@ Phase 5: Current Work & Future Ideas
 
 [x] 5.1: File-Based Routing in Dev Server: Map `templates/about.nml` → `/about`, nested folders, and dynamic segments like `templates/users/[id].nml` → `/users/<id>` with 404 fallback.
 
-[ ] 5.2: Minimal Client State: Optional tiny runtime for trivial state. (Events done via `on:*` attributes.)
+[x] 5.2: Minimal Client State: Optional tiny runtime for trivial state. (Events done via `on:*` attributes.)
 
 [x] 5.3: Packaging & CLI: `pyproject.toml` and an `nmlc` console script; README updates.
 
