@@ -1,6 +1,7 @@
-# NML (Not A Markup Language)
+# NML (Neat Markup Language)
 
  A simple, component-first way to author web UIs that compiles to clean HTML. Write less boilerplate than plain HTML/CSS and avoid heavy client frameworks.
+
 
  ## Features
 
