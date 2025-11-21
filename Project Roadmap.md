@@ -1,6 +1,6 @@
 NML Project Vision & Roadmap
 
-Name: Not A Markup Language (NML)
+Name: Neat Markup Language (NML)
 Extension: .nml
 Vision: "Simple and effective when written, but a powerhouse under the hood."
 
@@ -107,3 +107,21 @@ Phase 5: Current Work & Future Ideas
 [ ] State Management: A simple, built-in way to handle client-side state.
 
 [x] Event Handling: A syntax for client-side events (e.g., `button.on:click("myFunction")`).
+
+Phase 6: Packaging & Release (Upcoming)
+
+[ ] 6.1: Publish to TestPyPI and PyPI (add LICENSE, classifiers, project URLs)
+
+[ ] 6.2: Add `nml-dev` console script to run the dev server in the current project
+
+[ ] 6.3: Ensure `static/nml_runtime.js` is packaged and served in installed projects
+
+[ ] 6.4: README install section (pip/uv/pipx) and CLIs (`nmlc`, `nml-dev`)
+
+Phase 7: Enhancements (Optional/Future)
+
+[ ] 7.1: Optional client-side navigation (progressive enhancement via `data-nml-nav`)
+
+[ ] 7.2: CSS scoping improvements for complex selectors; add tests and docs
+
+[ ] 7.3: Partials/includes sugar (e.g., `@include("partials/header.nml")`)
