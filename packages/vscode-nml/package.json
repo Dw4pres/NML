@@ -50,8 +50,8 @@
     ]
   },
   "scripts": {
-    "package": "vsce package",
-    "publish": "vsce publish"
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.0.0"
