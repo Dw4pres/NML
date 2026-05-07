@@ -15,13 +15,22 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { readFile } from "fs/promises";
-import { compile, lint, listComponents } from "./tools.js";
+import { compile, lint, listComponents, getSyntaxRules } from "./tools.js";
 
 // ---------------------------------------------------------------------------
 // Tool definitions
 // ---------------------------------------------------------------------------
 
 const TOOLS = [
+  {
+    name: "nml_get_syntax_rules",
+    description:
+      "Get the strict syntax rules and directives for the NML language. Call this before writing any NML code to prevent HTML hallucinations.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
   {
     name: "nml_compile",
     description:
@@ -94,6 +103,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const input = (args ?? {}) as Record<string, unknown>;
 
   switch (name) {
+    case "nml_get_syntax_rules": {
+      return {
+        content: [{ type: "text", text: getSyntaxRules() }],
+      };
+    }
+
     case "nml_compile": {
       const source = String(input.source ?? "");
       const context = (input.context ?? {}) as Record<string, unknown>;
