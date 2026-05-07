@@ -1,8 +1,6 @@
 # Dependencies
 node_modules/
 
-# Bun
-bun.lockb
 
 # Build / dist outputs
 dist/
