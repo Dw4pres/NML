@@ -48,7 +48,7 @@ function genPackageJson(name: string, stack: Stack, extras: InitOptions["extras"
   const devDeps: Record<string, string> = {
     "@nml-lang/cli": "^2.2.0",
     "vite": "^5.0.0",
-    "vite-plugin-nml": "^2.2.0",
+    "@nml-lang/vite-plugin": "^2.2.0",
     "vitest": "^2.0.0",
     "typescript": "^5.5.0",
   };
@@ -80,7 +80,7 @@ function genPackageJson(name: string, stack: Stack, extras: InitOptions["extras"
 
 function genViteConfig(stack: Stack, extras: InitOptions["extras"]): string {
   const plugins: string[] = ["nml()"];
-  const imports = [`import { defineConfig } from "vite";`, `import nml from "vite-plugin-nml";`];
+  const imports = [`import { defineConfig } from "vite";`, `import nml from "@nml-lang/vite-plugin";`];
 
   if (extras.tailwind) {
     imports.push(`import tailwindcss from "tailwindcss";`);

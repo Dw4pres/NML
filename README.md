@@ -12,7 +12,7 @@ A component-first markup language that compiles to clean HTML. Write less boiler
 |---|---|
 | [`@nml-lang/compiler-ts`](packages/compiler-ts/) | Core TypeScript compiler — lexer, parser, renderer, `CompilerAdapter` interface |
 | [`@nml-lang/cli`](packages/cli/) | `nml` binary — `init`, `dev`, `build`, `deploy`, `test` commands |
-| [`vite-plugin-nml`](packages/vite-plugin-nml/) | Vite transform plugin — `*.nml` → ESM, HMR, static HTML emission |
+| [`@nml-lang/vite-plugin`](packages/vite-plugin-nml/) | Vite transform plugin — `*.nml` → ESM, HMR, static HTML emission |
 | [`@nml-lang/mcp-server`](packages/mcp-server/) | stdio MCP server — `nml_compile`, `nml_lint`, `nml_list_components` tools for AI assistants |
 | [`worker-template`](packages/worker-template/) | Hono + Cloudflare Workers scaffold — ready-to-deploy edge app |
 
@@ -42,13 +42,13 @@ nml test         # NML lint (parse errors with file:line) + bun test
 ### Existing project — add the Vite plugin
 
 ```bash
-bun add -d vite-plugin-nml
+bun add -d @nml-lang/vite-plugin
 ```
 
 ```ts
 // vite.config.ts
 import { defineConfig } from "vite";
-import nml from "vite-plugin-nml";
+import nml from "@nml-lang/vite-plugin";
 
 export default defineConfig({
   plugins: [nml({ viewsDir: "views" })],
