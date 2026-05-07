@@ -4,7 +4,7 @@
  * No I/O side-effects — accepts injected readFile for testability.
  */
 
-import { buildAst, nmlCompiler, NMLParserError } from "@nml/compiler-ts";
+import { buildAst, nmlCompiler, NMLParserError } from "@nml-lang/compiler-ts";
 
 // ---------------------------------------------------------------------------
 // Types

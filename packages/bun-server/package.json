@@ -1,5 +1,5 @@
 {
-  "name": "@nml/bun-server",
+  "name": "@nml-lang/bun-server",
   "version": "1.0.0",
   "description": "Minimal Bun HTTP server for NML applications using the universal fetch handler",
   "type": "module",
@@ -8,8 +8,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@nml/compiler-ts": "workspace:*",
-    "@nml/router": "workspace:*"
+    "@nml-lang/compiler-ts": "workspace:*",
+    "@nml-lang/router": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",

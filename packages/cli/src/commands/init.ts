@@ -35,18 +35,18 @@ async function writeIfMissing(p: string, content: string): Promise<void> {
 
 function genPackageJson(name: string, stack: Stack, extras: InitOptions["extras"]): string {
   const deps: Record<string, string> = {
-    "@nml/compiler-ts": "^2.2.0",
+    "@nml-lang/compiler-ts": "^2.2.0",
   };
   if (stack === "edge" || stack === "hybrid") {
     deps["hono"] = "^4.0.0";
   }
   if (stack === "bun-server") {
-    deps["@nml/router"] = "^2.2.0";
+    deps["@nml-lang/router"] = "^2.2.0";
   }
   if (extras.tailwind) deps["tailwindcss"] = "^3.0.0";
 
   const devDeps: Record<string, string> = {
-    "@nml/cli": "^2.2.0",
+    "@nml-lang/cli": "^2.2.0",
     "vite": "^5.0.0",
     "vite-plugin-nml": "^2.2.0",
     "vitest": "^2.0.0",
@@ -228,8 +228,8 @@ function genComponentsNml(): string {
 function genBunServerTs(): string {
   return `import { readFile } from "fs/promises";
 import { resolve } from "path";
-import { nmlCompiler } from "@nml/compiler-ts";
-import { scanRoutes, createHandler } from "@nml/router";
+import { nmlCompiler } from "@nml-lang/compiler-ts";
+import { scanRoutes, createHandler } from "@nml-lang/router";
 
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const viewsDir = resolve("views");

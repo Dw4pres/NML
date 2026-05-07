@@ -1,5 +1,5 @@
 {
-  "name": "@nml/router",
+  "name": "@nml-lang/router",
   "version": "2.2.0",
   "description": "NML file-system router — scanRoutes, matchRoute, and universal fetch handler",
   "type": "module",

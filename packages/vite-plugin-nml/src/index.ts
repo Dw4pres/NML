@@ -16,7 +16,7 @@
 import type { Plugin, ViteDevServer } from "vite";
 import { readFile } from "fs/promises";
 import { resolve, relative, join } from "path";
-import { buildAst, generateHtml, NMLParserError } from "@nml/compiler-ts";
+import { buildAst, generateHtml, NMLParserError } from "@nml-lang/compiler-ts";
 
 export interface NmlPluginOptions {
   /** Directory to scan for .nml files in build mode. Default: "views" */
@@ -44,7 +44,7 @@ function nmlToEsm(source: string, id: string, globalContext: Record<string, unkn
   const ctxJson = JSON.stringify(globalContext);
 
   return `
-import { buildAst, generateHtml } from "@nml/compiler-ts";
+import { buildAst, generateHtml } from "@nml-lang/compiler-ts";
 
 const _source = ${escaped};
 const _globalContext = ${ctxJson};

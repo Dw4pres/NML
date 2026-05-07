@@ -10,10 +10,10 @@ A component-first markup language that compiles to clean HTML. Write less boiler
 
 | Package | Description |
 |---|---|
-| [`@nml/compiler-ts`](packages/compiler-ts/) | Core TypeScript compiler — lexer, parser, renderer, `CompilerAdapter` interface |
-| [`@nml/cli`](packages/cli/) | `nml` binary — `init`, `dev`, `build`, `deploy`, `test` commands |
+| [`@nml-lang/compiler-ts`](packages/compiler-ts/) | Core TypeScript compiler — lexer, parser, renderer, `CompilerAdapter` interface |
+| [`@nml-lang/cli`](packages/cli/) | `nml` binary — `init`, `dev`, `build`, `deploy`, `test` commands |
 | [`vite-plugin-nml`](packages/vite-plugin-nml/) | Vite transform plugin — `*.nml` → ESM, HMR, static HTML emission |
-| [`@nml/mcp-server`](packages/mcp-server/) | stdio MCP server — `nml_compile`, `nml_lint`, `nml_list_components` tools for AI assistants |
+| [`@nml-lang/mcp-server`](packages/mcp-server/) | stdio MCP server — `nml_compile`, `nml_lint`, `nml_list_components` tools for AI assistants |
 | [`worker-template`](packages/worker-template/) | Hono + Cloudflare Workers scaffold — ready-to-deploy edge app |
 
 **Runtime:** [Bun](https://bun.sh) · **Tests:** Vitest · **Deploy:** Cloudflare Workers via Wrangler
@@ -25,7 +25,7 @@ A component-first markup language that compiles to clean HTML. Write less boiler
 ### New project
 
 ```bash
-bunx @nml/cli init
+bunx @nml-lang/cli init
 ```
 
 The wizard asks for a name, stack (`edge` / `static` / `hybrid`), and optional extras (HTMX, Alpine.js, Tailwind). It scaffolds everything and never overwrites existing files.
@@ -254,7 +254,7 @@ args:    ["run", "/absolute/path/to/NML/packages/mcp-server/src/index.ts"]
 ## Compiler API
 
 ```ts
-import { nmlCompiler } from "@nml/compiler-ts";
+import { nmlCompiler } from "@nml-lang/compiler-ts";
 
 const html = nmlCompiler.render('h1("Hello")', { name: "World" });
 ```
@@ -262,7 +262,7 @@ const html = nmlCompiler.render('h1("Hello")', { name: "World" });
 ### Custom adapter
 
 ```ts
-import type { CompilerAdapter } from "@nml/compiler-ts";
+import type { CompilerAdapter } from "@nml-lang/compiler-ts";
 
 class MyCompiler implements CompilerAdapter {
   render(input: string, context = {}) { ... }
@@ -272,7 +272,7 @@ class MyCompiler implements CompilerAdapter {
 ### Low-level
 
 ```ts
-import { buildAst, generateHtml, NMLParserError } from "@nml/compiler-ts";
+import { buildAst, generateHtml, NMLParserError } from "@nml-lang/compiler-ts";
 
 try {
   const ast = buildAst(source);

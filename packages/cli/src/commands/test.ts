@@ -9,7 +9,7 @@
 
 import { readFile, access } from "fs/promises";
 import { join, relative } from "path";
-import { nmlCompiler, NMLParserError } from "@nml/compiler-ts";
+import { nmlCompiler, NMLParserError } from "@nml-lang/compiler-ts";
 import { spawn } from "child_process";
 
 async function findNmlFiles(cwd: string): Promise<string[]> {

@@ -1,5 +1,5 @@
 {
-  "name": "@nml/cli",
+  "name": "@nml-lang/cli",
   "version": "2.2.0",
   "description": "NML command-line interface — init, dev, build, test, deploy",
   "type": "module",
@@ -27,8 +27,8 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@nml/compiler-ts": "workspace:*",
-    "@nml/router": "workspace:*"
+    "@nml-lang/compiler-ts": "workspace:*",
+    "@nml-lang/router": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^2.0.0",

@@ -1,5 +1,5 @@
 {
-  "name": "@nml/mcp-server",
+  "name": "@nml-lang/mcp-server",
   "version": "2.2.0",
   "description": "NML MCP server — nml_compile, nml_lint, nml_list_components tools for AI assistants",
   "type": "module",
@@ -27,7 +27,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@nml/compiler-ts": "workspace:*",
+    "@nml-lang/compiler-ts": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "devDependencies": {

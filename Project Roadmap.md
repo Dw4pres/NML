@@ -130,7 +130,7 @@ Phase 7: Enhancements (Optional/Future)
 
 NML 2.2 Rewrite (TypeScript/Bun Monorepo)
 
-Phase 1: Pluggable TypeScript Compiler (@nml/compiler-ts) — COMPLETE
+Phase 1: Pluggable TypeScript Compiler (@nml-lang/compiler-ts) — COMPLETE
 
 [x] packages/compiler-ts/ scaffold (Bun, Vitest, tsconfig)
 [x] lexer.ts — tokenizer with { line, column } source tracking on every token, newline counting in multiline blocks
@@ -148,7 +148,7 @@ Phase 1: Pluggable TypeScript Compiler (@nml/compiler-ts) — COMPLETE
     [x] adapter.test.ts (7 tests) — CompilerAdapter interface contract, custom adapter substitutability
 [x] Root package.json Bun workspace setup
 
-Phase 2: Magic CLI (@nml/cli — nml binary) — COMPLETE
+Phase 2: Magic CLI (@nml-lang/cli — nml binary) — COMPLETE
 
 [x] packages/cli/ scaffold (Bun, Vitest, tsconfig)
 [x] src/index.ts — CLI entry point, command dispatcher (init/dev/build/deploy/test)
@@ -214,7 +214,7 @@ Phase 4: stdio MCP Server + Real-Time Diagnostics — COMPLETE
 Phase 5: README & Docs — COMPLETE
 
 [x] README.md — full rewrite for TypeScript/Bun monorepo:
-    [x] Monorepo package table (@nml/compiler-ts, @nml/cli, vite-plugin-nml, @nml/mcp-server, worker-template)
+    [x] Monorepo package table (@nml-lang/compiler-ts, @nml-lang/cli, vite-plugin-nml, @nml-lang/mcp-server, worker-template)
     [x] Quick Start — nml init wizard, nml dev/build/deploy/test
     [x] Vite plugin install + vite.config.ts example
     [x] NML syntax reference — elements, variables, components, props, events, doctype, comments
@@ -239,7 +239,7 @@ Phase 6: CI & Tooling — COMPLETE
 [x] packages/worker-template test script — replaced nml test with echo no-op (scaffold only)
 [x] packages/compiler-ts, vite-plugin-nml — added types + module + conditional exports fields
 
-Phase 7: File-Based Routing (@nml/router) — COMPLETE
+Phase 7: File-Based Routing (@nml-lang/router) — COMPLETE
 
 [x] packages/router/ — new workspace package, pure TS, no Hono dep
     [x] src/types.ts — RouteEntry, RouteMap, RouteSegment, MatchResult
@@ -263,7 +263,7 @@ Phase 7: File-Based Routing (@nml/router) — COMPLETE
     [x] views/about.nml and views/404.nml added as examples
     [x] app.notFound() renders 404.nml
 [x] packages/cli/commands/build.ts — step 5: writes dist/routes.json manifest
-[x] packages/cli/package.json — added @nml/router workspace dependency
+[x] packages/cli/package.json — added @nml-lang/router workspace dependency
 [x] .github/workflows/ci.yml — router test step added
 [x] Total tests: 194 (111 compiler-ts + 34 cli + 14 vite-plugin-nml + 16 mcp-server + 19 router)
 
@@ -271,7 +271,7 @@ Phase 8: @include Partials + Async Render Infection — COMPLETE
 
 [x] CompilerAdapter.render() → Promise<string> (breaking change, all callers updated)
 [x] CompileOptions: added readFile?: (path: string) => Promise<string> and basePath?: string
-[x] RenderOptions interface exported from @nml/compiler-ts
+[x] RenderOptions interface exported from @nml-lang/compiler-ts
 [x] generateHtml() → async, accepts RenderOptions; recursive await throughout
 [x] @include directive — parser:
     [x] parseLine: candidate === "@include" || candidate.startsWith("@include(")
@@ -338,7 +338,7 @@ Phase 10: Edge Adapter Abstraction — COMPLETE
     [x] Falls through to 404 for unmatched paths or missing files
     [x] Merges baseContext + dynamic params into render context
     [x] Configurable notFoundSrc for custom 404 pages
-    [x] Exported from @nml/router barrel (createHandler, FetchHandler, NmlHandlerCompiler, NmlHandlerOptions)
+    [x] Exported from @nml-lang/router barrel (createHandler, FetchHandler, NmlHandlerCompiler, NmlHandlerOptions)
 [x] packages/bun-server/ — new package:
     [x] startServer(opts) — wraps createHandler, calls Bun.serve()
     [x] Auto-start guard: only runs when executed directly (typeof Bun check)
@@ -351,7 +351,7 @@ Phase 10: Edge Adapter Abstraction — COMPLETE
 [x] nml init updated:
     [x] Stack type extended: "edge" | "static" | "hybrid" | "bun-server"
     [x] bun-server: scaffolds src/server.ts with startServer call
-    [x] bun-server: @nml/router dep + @types/bun devDep + start script
+    [x] bun-server: @nml-lang/router dep + @types/bun devDep + start script
     [x] Wrangler/Hono devDeps scoped to edge/hybrid only
 [x] Tests:
     [x] router.test.ts +7 createHandler: 200 match, Content-Type, 404 unmatched, custom 404, params injected, baseContext merged, readFile throws → 404
@@ -376,7 +376,7 @@ Phase 11: Language Polish — Loops, Conditionals, Filters — COMPLETE
     [x] Recurses into all children arrays; runs after expandComponentsPass in buildAst
 [x] isTruthy(val) — Pythonic UI-optimized truthiness:
     [x] null, undefined, 0, "", [], {} → false; everything else → JS default
-    [x] Exported from @nml/compiler-ts barrel
+    [x] Exported from @nml-lang/compiler-ts barrel
 [x] Filter pipeline in renderVariables:
     [x] {{ val|filter }} and {{ val|filter("arg") }} syntax
     [x] Lookup order: BUILTIN_FILTERS → context[filterName] → "" (silent)
@@ -415,10 +415,10 @@ Phase 12: Stabilize & Ship (Priority 1) — IN PROGRESS
     [x] 4 new tests in each-if-filters.test.ts (error messages describe block)
 
 12C: NPM Publish Workflow [ ]
-    [ ] Decide public package scope (@nml/* or nml-*)
+    [ ] Decide public package scope (@nml-lang/* or nml-*)
     [ ] Add publishConfig + files fields to each package.json
     [ ] bun publish dry-run script
-    [ ] Tag v1.0.0 and publish: @nml/compiler-ts, @nml/cli, vite-plugin-nml, @nml/router
+    [ ] Tag v1.0.0 and publish: @nml-lang/compiler-ts, @nml-lang/cli, vite-plugin-nml, @nml-lang/router
 
 Phase 13: Editor Experience (Priority 2) — PLANNED
 
@@ -433,11 +433,11 @@ Phase 13: Editor Experience (Priority 2) — PLANNED
 
 Phase 14: Ecosystem Adapters (Priority 3) — PLANNED
 
-14A: @nml/express — Express middleware adapter
+14A: @nml-lang/express — Express middleware adapter
     [ ] createExpressHandler(opts) → RequestHandler
-    [ ] Same interface as createHandler from @nml/router
+    [ ] Same interface as createHandler from @nml-lang/router
 
-14B: @nml/react — RSC integration (lower priority)
+14B: @nml-lang/react — RSC integration (lower priority)
     [ ] renderNml(src, ctx) → string usable inside Server Components
     [ ] Evaluate zero-bloat tradeoff before implementing
 

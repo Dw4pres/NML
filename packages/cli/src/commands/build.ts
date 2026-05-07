@@ -8,7 +8,7 @@ import { join } from "path";
 import { spawn } from "child_process";
 import { detectLibrariesInNml, getRegistry } from "../detector.js";
 import { downloadByPrefix, rewriteCdnSrcs } from "../localizer.js";
-import { scanRoutes, serializeRouteMap } from "@nml/router";
+import { scanRoutes, serializeRouteMap } from "@nml-lang/router";
 
 async function collectNmlFiles(dir: string): Promise<string[]> {
   const { readdir } = await import("fs/promises");

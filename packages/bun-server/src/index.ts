@@ -1,17 +1,17 @@
 /**
- * @nml/bun-server
- * Minimal Bun HTTP server using the @nml/router universal fetch handler.
+ * @nml-lang/bun-server
+ * Minimal Bun HTTP server using the @nml-lang/router universal fetch handler.
  *
  * Usage:
- *   import { startServer } from "@nml/bun-server";
+ *   import { startServer } from "@nml-lang/bun-server";
  *   await startServer({ port: 3000, viewsDir: "./views" });
  */
 
 import { readFile } from "fs/promises";
 import { join, resolve } from "path";
-import { nmlCompiler } from "@nml/compiler-ts";
-import { scanRoutes, createHandler } from "@nml/router";
-import type { NmlHandlerOptions } from "@nml/router";
+import { nmlCompiler } from "@nml-lang/compiler-ts";
+import { scanRoutes, createHandler } from "@nml-lang/router";
+import type { NmlHandlerOptions } from "@nml-lang/router";
 
 // ---------------------------------------------------------------------------
 // Public interface

@@ -1,5 +1,5 @@
 {
-  "name": "@nml/worker-template",
+  "name": "@nml-lang/worker-template",
   "version": "2.2.0",
   "private": true,
   "type": "module",
@@ -10,12 +10,12 @@
     "test": "echo \"worker-template: no tests (scaffold only)\""
   },
   "dependencies": {
-    "@nml/compiler-ts": "workspace:*",
-    "@nml/router": "workspace:*",
+    "@nml-lang/compiler-ts": "workspace:*",
+    "@nml-lang/router": "workspace:*",
     "hono": "^4.0.0"
   },
   "devDependencies": {
-    "@nml/cli": "workspace:*",
+    "@nml-lang/cli": "workspace:*",
     "vite": "^5.0.0",
     "vite-plugin-nml": "workspace:*",
     "wrangler": "^3.0.0",

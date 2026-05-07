@@ -37,7 +37,7 @@
     "vite": ">=4.0.0"
   },
   "dependencies": {
-    "@nml/compiler-ts": "workspace:*"
+    "@nml-lang/compiler-ts": "workspace:*"
   },
   "devDependencies": {
     "vite": "^5.0.0",

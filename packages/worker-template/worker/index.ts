@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { nmlCompiler } from "@nml/compiler-ts";
-import { scanRoutes, createHandler } from "@nml/router";
+import { nmlCompiler } from "@nml-lang/compiler-ts";
+import { scanRoutes, createHandler } from "@nml-lang/router";
 
 // ---------------------------------------------------------------------------
 // Types

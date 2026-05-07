@@ -72,7 +72,7 @@ describe("vite-plugin-nml transform", () => {
     expect(code).toContain("export const html");
     expect(code).toContain("export default render");
     // Uses compiler-ts
-    expect(code).toContain("@nml/compiler-ts");
+    expect(code).toContain("@nml-lang/compiler-ts");
     expect(code).toContain("buildAst");
     expect(code).toContain("generateHtml");
   });

@@ -1,10 +1,10 @@
 /**
  * hono.ts
- * Thin Hono adapter for @nml/router.
+ * Thin Hono adapter for @nml-lang/router.
  *
  * Usage in worker/index.ts:
- *   import { scanRoutes } from "@nml/router";
- *   import { registerNmlRoutes } from "@nml/router/hono";
+ *   import { scanRoutes } from "@nml-lang/router";
+ *   import { registerNmlRoutes } from "@nml-lang/router/hono";
  *
  *   const routeMap = await scanRoutes(join(import.meta.dir, "../views"));
  *   registerNmlRoutes(app, routeMap, nmlCompiler, { readFile });
