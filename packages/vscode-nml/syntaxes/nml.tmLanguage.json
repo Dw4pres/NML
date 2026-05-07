@@ -1,0 +1,201 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "NML",
+  "scopeName": "source.nml",
+  "fileTypes": ["nml"],
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#doctype" },
+    { "include": "#directive-control" },
+    { "include": "#directive-component-def" },
+    { "include": "#directive-component-call" },
+    { "include": "#directive-slot" },
+    { "include": "#directive-style" },
+    { "include": "#directive-include" },
+    { "include": "#pipe-content" },
+    { "include": "#element-line" }
+  ],
+  "repository": {
+    "comment": {
+      "match": "//.*$",
+      "name": "comment.line.double-slash.nml"
+    },
+
+    "doctype": {
+      "match": "^\\s*(doctype)(\\.html)?\\s*$",
+      "captures": {
+        "1": { "name": "keyword.other.doctype.nml" },
+        "2": { "name": "entity.name.tag.html.nml" }
+      }
+    },
+
+    "directive-control": {
+      "patterns": [
+        {
+          "match": "^\\s*(@each)\\(([^)]+)\\)",
+          "captures": {
+            "1": { "name": "keyword.control.loop.nml" },
+            "2": { "name": "variable.other.nml" }
+          }
+        },
+        {
+          "match": "^\\s*(@endeach)\\b",
+          "captures": {
+            "1": { "name": "keyword.control.loop.nml" }
+          }
+        },
+        {
+          "match": "^\\s*(@if)\\(([^)]+)\\)",
+          "captures": {
+            "1": { "name": "keyword.control.conditional.nml" },
+            "2": { "name": "variable.other.nml" }
+          }
+        },
+        {
+          "match": "^\\s*(@else)\\b",
+          "captures": {
+            "1": { "name": "keyword.control.conditional.nml" }
+          }
+        },
+        {
+          "match": "^\\s*(@endif)\\b",
+          "captures": {
+            "1": { "name": "keyword.control.conditional.nml" }
+          }
+        }
+      ]
+    },
+
+    "directive-component-def": {
+      "match": "^\\s*(@define)\\.([A-Z][A-Za-z0-9]*)",
+      "captures": {
+        "1": { "name": "keyword.other.define.nml" },
+        "2": { "name": "entity.name.type.component.nml" }
+      }
+    },
+
+    "directive-component-call": {
+      "match": "^\\s*(@)([A-Z][A-Za-z0-9]*)([^\\s]*)?",
+      "captures": {
+        "1": { "name": "punctuation.definition.directive.nml" },
+        "2": { "name": "support.class.component.nml" },
+        "3": { "include": "#attr-chain" }
+      }
+    },
+
+    "directive-slot": {
+      "match": "^\\s*(@slot)(\\.([a-zA-Z][a-zA-Z0-9_-]*))?",
+      "captures": {
+        "1": { "name": "keyword.other.slot.nml" },
+        "3": { "name": "entity.name.tag.slot.nml" }
+      }
+    },
+
+    "directive-style": {
+      "match": "^\\s*(@style):?\\s*$",
+      "captures": {
+        "1": { "name": "keyword.other.style.nml" }
+      }
+    },
+
+    "directive-include": {
+      "match": "^\\s*(@include)\\((['\"]?)([^'\"\\)]+)\\2\\)",
+      "captures": {
+        "1": { "name": "keyword.control.include.nml" },
+        "2": { "name": "punctuation.definition.string.nml" },
+        "3": { "name": "string.quoted.other.include-path.nml" }
+      }
+    },
+
+    "pipe-content": {
+      "match": "(\\|)\\s*(.*?)\\s*$",
+      "captures": {
+        "1": { "name": "keyword.operator.pipe.nml" },
+        "2": {
+          "patterns": [
+            { "include": "#template-variable" },
+            { "name": "string.unquoted.content.nml" }
+          ]
+        }
+      }
+    },
+
+    "element-line": {
+      "match": "^(\\s*)([a-z][a-zA-Z0-9-]*)((?:\\.[^|\\s]+)*)(\\s*\\|.*)?$",
+      "captures": {
+        "2": { "name": "entity.name.tag.html.nml" },
+        "3": { "include": "#attr-chain" },
+        "4": {
+          "patterns": [
+            { "include": "#pipe-content" }
+          ]
+        }
+      }
+    },
+
+    "attr-chain": {
+      "patterns": [
+        {
+          "match": "(\\.class)\\(([^)]+)\\)",
+          "captures": {
+            "1": { "name": "entity.other.attribute-name.class.nml" },
+            "2": { "name": "string.quoted.attribute-value.nml" }
+          }
+        },
+        {
+          "match": "(\\.id)\\(([^)]+)\\)",
+          "captures": {
+            "1": { "name": "entity.other.attribute-name.id.nml" },
+            "2": { "name": "string.quoted.attribute-value.nml" }
+          }
+        },
+        {
+          "match": "(\\.hx-[a-z][a-z-]*)(?:\\(([^)]+)\\))?",
+          "captures": {
+            "1": { "name": "entity.other.attribute-name.htmx.nml" },
+            "2": { "name": "string.quoted.attribute-value.nml" }
+          }
+        },
+        {
+          "match": "(\\.x-[a-z][a-z-]*)(?:\\(([^)]+)\\))?",
+          "captures": {
+            "1": { "name": "entity.other.attribute-name.alpine.nml" },
+            "2": { "name": "string.quoted.attribute-value.nml" }
+          }
+        },
+        {
+          "match": "(\\.on:[a-z]+)(?:\\(([^)]+)\\))?",
+          "captures": {
+            "1": { "name": "entity.other.attribute-name.event.nml" },
+            "2": { "name": "string.quoted.attribute-value.nml" }
+          }
+        },
+        {
+          "match": "(\\.prop\\.[a-zA-Z_][a-zA-Z0-9_]*)(?:\\(([^)]+)\\))?",
+          "captures": {
+            "1": { "name": "variable.other.prop.nml" },
+            "2": { "name": "string.quoted.attribute-value.nml" }
+          }
+        },
+        {
+          "match": "(\\.([a-zA-Z][a-zA-Z0-9_-]*))(?:\\(([^)]+)\\))?",
+          "captures": {
+            "1": { "name": "entity.other.attribute-name.nml" },
+            "3": { "name": "string.quoted.attribute-value.nml" }
+          }
+        }
+      ]
+    },
+
+    "template-variable": {
+      "match": "\\{\\{\\s*([a-zA-Z_][a-zA-Z0-9_.]*)(\\|([a-zA-Z_][a-zA-Z0-9_]*)(?:\\(([^)]*)\\))?)?\\s*\\}\\}",
+      "name": "meta.template.expression.nml",
+      "captures": {
+        "1": { "name": "variable.other.template.nml" },
+        "2": { "name": "keyword.operator.filter.nml" },
+        "3": { "name": "support.function.filter.nml" },
+        "4": { "name": "string.quoted.filter-arg.nml" }
+      }
+    }
+  }
+}

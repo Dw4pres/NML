@@ -42,12 +42,15 @@ function nmlToEsm(source: string, id: string, globalContext: Record<string, unkn
   // This keeps the module hot-reloadable and context-dynamic.
   const escaped = JSON.stringify(source);
   const ctxJson = JSON.stringify(globalContext);
+  // Use the module id as the HMR channel key so each .nml file patches its own DOM nodes.
+  const hmrKey = JSON.stringify(id);
 
   return `
 import { buildAst, generateHtml } from "@nml-lang/compiler-ts";
 
 const _source = ${escaped};
 const _globalContext = ${ctxJson};
+const _hmrKey = ${hmrKey};
 
 export async function render(context = {}) {
   const ast = buildAst(_source);
@@ -56,6 +59,22 @@ export async function render(context = {}) {
 
 export const html = await render();
 export default render;
+
+if (import.meta.hot) {
+  import.meta.hot.on("nml:update", async (data) => {
+    if (data.id !== _hmrKey) return;
+    const newHtml = data.html;
+    document.querySelectorAll("[data-nml-src]").forEach((el) => {
+      if (el.getAttribute("data-nml-src") === _hmrKey) {
+        el.innerHTML = newHtml;
+      }
+    });
+    if (!document.querySelector("[data-nml-src]")) {
+      import.meta.hot.invalidate();
+    }
+  });
+  import.meta.hot.accept();
+}
 `.trimStart();
 }
 
@@ -115,14 +134,29 @@ export default function nmlPlugin(options: NmlPluginOptions = {}): Plugin {
       }
     },
 
-    // HMR: watch .nml files
-    handleHotUpdate({ file, server }: { file: string; server: ViteDevServer }) {
+    // HMR: DOM-patch .nml files without a full page reload
+    async handleHotUpdate({ file, server }: { file: string; server: ViteDevServer }) {
       if (!file.endsWith(".nml")) return;
+
       const mod = server.moduleGraph.getModuleById(file);
-      if (mod) {
-        server.moduleGraph.invalidateModule(mod);
+      if (mod) server.moduleGraph.invalidateModule(mod);
+
+      // Re-render the changed file and push an nml:update event to the client.
+      // The client-side HMR handler (injected by nmlToEsm) patches the DOM in place.
+      try {
+        const src = await readFile(file, "utf-8");
+        const ast = buildAst(src);
+        const html = await generateHtml(ast, 0, globalContext);
+        server.ws.send({
+          type: "custom",
+          event: "nml:update",
+          data: { id: file, html },
+        });
+      } catch {
+        // Parse error — fall back to full reload so Vite can show the overlay
         server.ws.send({ type: "full-reload" });
       }
+
       return [];
     },
 

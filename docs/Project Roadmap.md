@@ -211,15 +211,26 @@ Our goal: a component-based web framework that abstracts away repetitive HTML/CS
 - [x] Published `@nml-lang/cli@2.2.0`
 - [x] Published `@nml-lang/mcp-server@2.2.0`
 
-### Phase 13 — Editor Experience 📋
+### Phase 13 — Editor Experience ✅
 
-**13A — VS Code / Windsurf Extension**
-- [ ] `.nml` TextMate grammar — elements, directives, `{{ }}`, pipes
-- [ ] Squiggly lines via LSP (delegate to `nml_lint`)
-- [ ] Auto-complete for built-in directives and filters
+**13A — VS Code / Windsurf Extension** ✅
+- [x] `packages/vscode-nml` — standalone VS Code extension package
+- [x] `syntaxes/nml.tmLanguage.json` — TextMate grammar:
+  - Elements, `.attr()` chains, HTMX `.hx-*`, Alpine `.x-*`, event `.on:*`
+  - Directives: `@define`, `@slot`, `@style:`, `@include`, `@each`, `@if`, `@else`, `@endif`
+  - Template variables: `{{ var }}`, `{{ var|filter }}`, `{{ var|filter("arg") }}`
+  - Pipe content: `element | text`, comments: `// ...`, `doctype.html`
+- [x] `snippets/nml.code-snippets` — 14 snippets (`nml-doc`, `neach`, `nif`, `ndefine`, `ninclude`, `nhtmx`, `nalpine`, …)
+- [x] `language-configuration.json` — auto-close pairs, folding, indent rules, `//` comments
+- [x] `package.json` — VS Code marketplace-ready (`vsce package` / `vsce publish`)
 
-**13B — True HMR**
-- [ ] DOM patch via Vite HMR API (no full page reload)
+**13B — True HMR** ✅
+- [x] `handleHotUpdate` sends `nml:update` custom WS event with re-rendered HTML (no full-reload)
+- [x] Parse error falls back to `full-reload` so Vite error overlay still works
+- [x] `nmlToEsm` injects `import.meta.hot` client handler — patches `[data-nml-src]` DOM nodes in place
+- [x] `import.meta.hot.accept()` keeps module live without triggering cascade reload
+- [x] **6 new tests** (handleHotUpdate × 4, HMR client injection × 2) · **20 vite-plugin tests total**
+- [x] `@nml-lang/vite-plugin@2.2.1` built and ready to publish
 
 ### Phase 14 — Ecosystem Adapters 📋
 
@@ -240,4 +251,4 @@ Our goal: a component-based web framework that abstracts away repetitive HTML/CS
 
 ---
 
-*276 tests passing · All packages published · CI green*
+*282 tests passing · All packages published · CI green*

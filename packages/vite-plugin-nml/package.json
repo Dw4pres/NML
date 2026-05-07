@@ -1,6 +1,6 @@
 {
   "name": "@nml-lang/vite-plugin",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Vite plugin for NML — .nml → ES module transform with HMR and scoped styles",
   "type": "module",
   "main": "./src/index.ts",

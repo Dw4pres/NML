@@ -179,6 +179,117 @@ describe("vite-plugin-nml load", () => {
 });
 
 // ---------------------------------------------------------------------------
+// handleHotUpdate — true HMR (nml:update custom event, no full-reload)
+// ---------------------------------------------------------------------------
+
+describe("vite-plugin-nml handleHotUpdate", () => {
+  let tmpDir: string;
+
+  beforeEach(async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), "nml-plugin-hmr-"));
+  });
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true });
+  });
+
+  it("sends nml:update custom event with rendered html on .nml change", async () => {
+    const filePath = join(tmpDir, "index.nml");
+    await writeFile(filePath, 'p("Hello HMR")', "utf-8");
+
+    const plugin = nmlPlugin() as Plugin & {
+      handleHotUpdate?: (ctx: { file: string; server: unknown }) => Promise<unknown[]>;
+    };
+
+    const sentMessages: unknown[] = [];
+    const fakeServer = {
+      moduleGraph: { getModuleById: () => null, invalidateModule: () => {} },
+      ws: {
+        send(msg: unknown) { sentMessages.push(msg); },
+      },
+    };
+
+    await plugin.handleHotUpdate!({ file: filePath, server: fakeServer as any });
+
+    expect(sentMessages).toHaveLength(1);
+    const msg = sentMessages[0] as { type: string; event: string; data: { id: string; html: string } };
+    expect(msg.type).toBe("custom");
+    expect(msg.event).toBe("nml:update");
+    expect(msg.data.id).toBe(filePath);
+    expect(msg.data.html).toContain("<p>Hello HMR</p>");
+  });
+
+  it("returns [] (suppresses Vite's default full-reload) on .nml change", async () => {
+    const filePath = join(tmpDir, "page.nml");
+    await writeFile(filePath, "h1 | Page", "utf-8");
+
+    const plugin = nmlPlugin() as Plugin & {
+      handleHotUpdate?: (ctx: { file: string; server: unknown }) => Promise<unknown[]>;
+    };
+
+    const fakeServer = {
+      moduleGraph: { getModuleById: () => null, invalidateModule: () => {} },
+      ws: { send: () => {} },
+    };
+
+    const result = await plugin.handleHotUpdate!({ file: filePath, server: fakeServer as any });
+    expect(result).toEqual([]);
+  });
+
+  it("falls back to full-reload when .nml has a parse error", async () => {
+    const filePath = join(tmpDir, "broken.nml");
+    await writeFile(filePath, "div\n  bad-indent", "utf-8");
+
+    const plugin = nmlPlugin() as Plugin & {
+      handleHotUpdate?: (ctx: { file: string; server: unknown }) => Promise<unknown[]>;
+    };
+
+    const sentMessages: unknown[] = [];
+    const fakeServer = {
+      moduleGraph: { getModuleById: () => null, invalidateModule: () => {} },
+      ws: { send(msg: unknown) { sentMessages.push(msg); } },
+    };
+
+    await plugin.handleHotUpdate!({ file: filePath, server: fakeServer as any });
+
+    const msg = sentMessages[0] as { type: string };
+    expect(msg.type).toBe("full-reload");
+  });
+
+  it("returns undefined (no-op) for non-.nml files", async () => {
+    const plugin = nmlPlugin() as Plugin & {
+      handleHotUpdate?: (ctx: { file: string; server: unknown }) => Promise<unknown[] | undefined>;
+    };
+
+    const fakeServer = {
+      moduleGraph: { getModuleById: () => null, invalidateModule: () => {} },
+      ws: { send: () => {} },
+    };
+
+    const result = await plugin.handleHotUpdate!({ file: "/src/app.ts", server: fakeServer as any });
+    expect(result).toBeUndefined();
+  });
+});
+
+describe("vite-plugin-nml HMR client injection", () => {
+  it("injects import.meta.hot handler into transformed module", async () => {
+    const plugin = nmlPlugin();
+    const result = await callTransform(plugin as Plugin, "p | Hello", "/views/index.nml");
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain("import.meta.hot");
+    expect(result!.code).toContain("nml:update");
+    expect(result!.code).toContain("import.meta.hot.accept()");
+  });
+
+  it("injects the module id as the HMR key", async () => {
+    const plugin = nmlPlugin();
+    const result = await callTransform(plugin as Plugin, "p | Hello", "/views/about.nml");
+
+    expect(result!.code).toContain("/views/about.nml");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // generateBundle hook (static build emission)
 // ---------------------------------------------------------------------------
 

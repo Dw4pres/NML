@@ -1,0 +1,66 @@
+{
+  "name": "vscode-nml",
+  "displayName": "NML — Neat Markup Language",
+  "description": "Syntax highlighting and snippets for .nml files (Neat Markup Language)",
+  "version": "0.1.0",
+  "publisher": "nml-lang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dw4pres/NML.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Dw4pres/NML/issues"
+  },
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "nml",
+    "neat markup language",
+    "template",
+    "htmx",
+    "alpine"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "nml",
+        "aliases": ["NML", "nml"],
+        "extensions": [".nml"],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/nml-light.svg",
+          "dark": "./icons/nml-dark.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "nml",
+        "scopeName": "source.nml",
+        "path": "./syntaxes/nml.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "nml",
+        "path": "./snippets/nml.code-snippets"
+      }
+    ]
+  },
+  "scripts": {
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.0.0"
+  }
+}

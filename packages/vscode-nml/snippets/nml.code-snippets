@@ -1,0 +1,133 @@
+{
+  "NML Full Document": {
+    "prefix": "nml-doc",
+    "body": [
+      "doctype.html",
+      "html.lang(\"en\")",
+      "    head",
+      "        meta.charset(\"UTF-8\")",
+      "        title | ${1:Page Title}",
+      "    body",
+      "        ${0}"
+    ],
+    "description": "Full NML HTML document scaffold"
+  },
+
+  "NML Element with class": {
+    "prefix": "nel",
+    "body": ["${1:div}.class(\"${2}\") | ${0}"],
+    "description": "Element with class attribute"
+  },
+
+  "NML Template Variable": {
+    "prefix": "nvar",
+    "body": ["{{ ${1:variable} }}"],
+    "description": "NML template variable"
+  },
+
+  "NML Template Variable with filter": {
+    "prefix": "nvarf",
+    "body": ["{{ ${1:variable}|${2|uppercase,lowercase,trim,json,default,raw|}${3} }}"],
+    "description": "NML template variable with filter"
+  },
+
+  "NML @each loop": {
+    "prefix": "neach",
+    "body": [
+      "@each(${1:items} as ${2:item})",
+      "    ${0}",
+      "@endeach"
+    ],
+    "description": "NML @each loop"
+  },
+
+  "NML @if conditional": {
+    "prefix": "nif",
+    "body": [
+      "@if(${1:condition})",
+      "    ${2}",
+      "@else",
+      "    ${0}",
+      "@endif"
+    ],
+    "description": "NML @if / @else / @endif"
+  },
+
+  "NML @if without else": {
+    "prefix": "nife",
+    "body": [
+      "@if(${1:condition})",
+      "    ${0}",
+      "@endif"
+    ],
+    "description": "NML @if without @else"
+  },
+
+  "NML @each + @if combo": {
+    "prefix": "neachif",
+    "body": [
+      "@each(${1:items} as ${2:item})",
+      "    @if(${2}.${3:active})",
+      "        ${0}",
+      "    @endif",
+      "@endeach"
+    ],
+    "description": "NML @each with nested @if"
+  },
+
+  "NML @define component": {
+    "prefix": "ndefine",
+    "body": [
+      "@define.${1:ComponentName}",
+      "    ${2:div}.class(\"${3}\")",
+      "        @slot",
+      "    @style:",
+      "        .${3} { ${0} }"
+    ],
+    "description": "NML component definition with scoped style"
+  },
+
+  "NML @define component with named slot": {
+    "prefix": "ndefine-slot",
+    "body": [
+      "@define.${1:ComponentName}",
+      "    ${2:div}.class(\"${3}\")",
+      "        div.class(\"${3}-header\")",
+      "            @slot.header",
+      "        div.class(\"${3}-body\")",
+      "            @slot",
+      "    @style:",
+      "        .${3} { ${0} }"
+    ],
+    "description": "NML component with header and default slots"
+  },
+
+  "NML @include partial": {
+    "prefix": "ninclude",
+    "body": ["@include(\"${1:partials/partial.nml}\")"],
+    "description": "NML @include partial"
+  },
+
+  "NML HTMX button": {
+    "prefix": "nhtmx",
+    "body": [
+      "button.hx-${1|get,post,put,delete|}(\"${2:/api/endpoint}\").hx-target(\"${3:#target}\").hx-swap(\"${4|innerHTML,outerHTML,beforeend|}\").class(\"${5}\") | ${0:Label}"
+    ],
+    "description": "NML button with HTMX attributes"
+  },
+
+  "NML Alpine.js x-data": {
+    "prefix": "nalpine",
+    "body": [
+      "div.x-data(\"{{ ${1:state}|json }}\").class(\"${2}\")",
+      "    ${0}"
+    ],
+    "description": "NML element with Alpine.js x-data bound to server state"
+  },
+
+  "NML pipe content": {
+    "prefix": "n|",
+    "body": ["${1:p} | ${0}"],
+    "description": "NML element with pipe content"
+  }
+}
