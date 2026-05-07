@@ -1,0 +1,10 @@
+doctype.html
+html.lang("en")
+    head
+        meta.charset("UTF-8")
+        meta.name("viewport").content("width=device-width, initial-scale=1.0")
+        title("About")
+    body
+        h1("About")
+        p("This page is served from views/about.nml via file-based routing.")
+        a.href("/")("← Back home")

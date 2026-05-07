@@ -1,0 +1,27 @@
+{
+  "name": "@nml/worker-template",
+  "version": "2.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nml dev",
+    "build": "nml build",
+    "deploy": "nml deploy",
+    "test": "echo \"worker-template: no tests (scaffold only)\""
+  },
+  "dependencies": {
+    "@nml/compiler-ts": "workspace:*",
+    "@nml/router": "workspace:*",
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "@nml/cli": "workspace:*",
+    "vite": "^5.0.0",
+    "vite-plugin-nml": "workspace:*",
+    "wrangler": "^3.0.0",
+    "vitest": "^2.0.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0",
+    "@cloudflare/workers-types": "^4.0.0"
+  }
+}

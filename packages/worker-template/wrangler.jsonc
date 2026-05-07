@@ -1,0 +1,13 @@
+{
+  "name": "my-nml-app",
+  "main": "worker/index.ts",
+  "compatibility_date": "2024-01-01",
+  // Uncomment to add D1 database binding:
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "my-nml-app-db",
+  //     "database_id": "REPLACE_WITH_YOUR_D1_ID"
+  //   }
+  // ]
+}

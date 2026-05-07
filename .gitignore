@@ -1,36 +1,35 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.py.class
+# Dependencies
+node_modules/
 
-# Virtual environments
-.venv/
-venv/
-ENV/
+# Bun
+bun.lockb
 
-# Test, coverage, and tooling
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.mypy_cache/
-.pytype/
+# Build / dist outputs
+dist/
+build/
+*.egg-info/
 
-# IDE/editor
+# Test coverage
+coverage/
+.nyc_output/
+
+# TypeScript incremental build
+*.tsbuildinfo
+
+# IDE / editor
 .vscode/
 .idea/
 *.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Build / dist
-build/
-dist/
-*.egg-info/
-
-# Local outputs
+# Local dev outputs
 out.html
+*.local
+
+# Wrangler / Cloudflare
+.wrangler/
+.dev.vars

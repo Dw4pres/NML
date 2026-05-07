@@ -1,356 +1,341 @@
-# NML (Neat Markup Language)
+# NML — Neat Markup Language
 
- A simple, component-first way to author web UIs that compiles to clean HTML. Write less boilerplate than plain HTML/CSS and avoid heavy client frameworks.
+> "Simple and effective when written, but a powerhouse under the hood."
 
+A component-first markup language that compiles to clean HTML. Write less boilerplate than plain HTML, get scoped CSS, named slots, template variables, and a full edge-ready toolchain — without a heavy client framework.
 
- ## Features
+---
 
- - Component syntax: `@define.Component` and `@Component` calls
- - Slots: default and named (`@slot.header`, `@slot.footer`) with fallback
- - Props: pass attributes at call-site and use them inside components via `{{ prop.* }}`
- - Scoped CSS: `@style:` blocks automatically scoped with stable `nml-c-xxxxxx`
- - Template variables: `{{ var }}` escaped by default; `{{ var|raw }}` for opt-out
- - Dev server: live-serve `.nml` templates with auto style injection
- - CLI: compile `.nml` to `.html`, optional `--watch`, `--components`, config discovery
- - File-based routing (dev server): `/users/123` → `templates/users/[id].nml`
- - Event attributes: `on:click("...")` → `onclick="..."` (and other `on:*`)
- - Strong tests and GitHub Actions CI
+## What's in the monorepo
 
-## Why NML
+| Package | Description |
+|---|---|
+| [`@nml/compiler-ts`](packages/compiler-ts/) | Core TypeScript compiler — lexer, parser, renderer, `CompilerAdapter` interface |
+| [`@nml/cli`](packages/cli/) | `nml` binary — `init`, `dev`, `build`, `deploy`, `test` commands |
+| [`vite-plugin-nml`](packages/vite-plugin-nml/) | Vite transform plugin — `*.nml` → ESM, HMR, static HTML emission |
+| [`@nml/mcp-server`](packages/mcp-server/) | stdio MCP server — `nml_compile`, `nml_lint`, `nml_list_components` tools for AI assistants |
+| [`worker-template`](packages/worker-template/) | Hono + Cloudflare Workers scaffold — ready-to-deploy edge app |
 
-- Write less boilerplate than HTML/CSS while staying close to the platform.
-- Component-first authoring with named slots and simple props.
-- Server-rendered by default; no heavy client framework or bundler required.
-- Scoped CSS per component, injected only if used.
-- File-based routing in the dev server for natural folder-to-URL mapping.
-- Optional, tiny runtime for trivial client state when you need it.
+**Runtime:** [Bun](https://bun.sh) · **Tests:** Vitest · **Deploy:** Cloudflare Workers via Wrangler
 
-## Why not a heavy JS framework?
+---
 
-- Less moving parts. No bundler, no VDOM, no hydration. You write NML → it becomes HTML.
-- Server-first by default. Pages render instantly and work without JavaScript.
-- Interactivity stays simple. Use native events (`on:*`) or an optional ~tiny helper for state.
-- CSS scoping without CSS-in-JS. Styles are deterministic and only injected when used.
-- Adopt incrementally. Works alongside existing Python/Flask projects without a Node toolchain.
+## Quick Start
 
-## How interactivity works (no framework)
+### New project
 
-- Native HTML first. Forms, links, `<details>`/`<summary>`, and CSS do a lot without JS.
-- One-line events. `on:click("...")` simply maps to `onclick="..."`. No bundler or build step.
-- Optional tiny runtime. Include `/static/nml_runtime.js` only when you need state:
-  - `nml('set path value')`, `nml('inc path [amount]')`, `nml('toggle path')`
-  - Bind text/values with `data-nml-bind` (e.g., `text:counter.count`)
-  - This is “JS-like” because it is JS under the hood—just minimal and opt‑in.
+```bash
+bunx @nml/cli init
+```
 
-## Philosophy & Design Principles
+The wizard asks for a name, stack (`edge` / `static` / `hybrid`), and optional extras (HTMX, Alpine.js, Tailwind). It scaffolds everything and never overwrites existing files.
 
-- Prefer server-rendered HTML; enhance progressively.
-- Prefer native browser features (links, forms, details/summary) over custom JS.
-- Components are simple functions of input → HTML, with named slots for composition.
-- Styles are local to components via deterministic scoping.
-- Keep runtime optional and tiny; no bundlers or hydration.
+```bash
+cd my-app
+bun install
+nml dev          # Vite dev server
+nml build        # Detect libs → download CDN assets → Vite build
+nml deploy       # Build + wrangler deploy
+nml test         # NML lint (parse errors with file:line) + bun test
+```
 
-## Common tasks by example
+### Existing project — add the Vite plugin
 
-- **Navigate** (no JS needed)
+```bash
+bun add -d vite-plugin-nml
+```
 
-  ```
-  a.href("/profile").class("link")
-    | Go to Profile
-  ```
+```ts
+// vite.config.ts
+import { defineConfig } from "vite";
+import nml from "vite-plugin-nml";
 
-- **Show/hide content** (use native details/summary)
+export default defineConfig({
+  plugins: [nml({ viewsDir: "views" })],
+});
+```
 
-  ```
-  details
-    summary("More info")
-    p("Hidden by default, shown when expanded.")
-  ```
+Import `.nml` files as ES modules:
 
-- **Submit a form** (server handles POST)
+```ts
+import render, { html } from "./views/index.nml";
 
-  ```
-  form.method("post").action("/signup")
-    input.type("text").name("email")
-    button.type("submit")
-      | Sign Up
-  ```
+// html — pre-rendered string with empty context
+// render(context) — re-renders with variables
+document.body.innerHTML = render({ title: "Hello" });
+```
 
-- **Client action without building** (inline event)
+---
 
-  ```
-  button.on:click("location.href='/settings'")
-    | Settings
-  ```
+## NML Syntax
 
-## When to use the tiny runtime
+NML uses **4-space indentation** to express nesting. There is no closing tag.
 
-- You need a simple counter, toggle, or input binding without a full framework.
-- You want to avoid a build step and keep JS to a few bytes.
-- Your features degrade gracefully (page still works if JS fails/disabled).
+### Elements & attributes
 
-## Requirements
+```nml
+div.class("container").id("main")
+    h1("Hello, World")
+    p("A paragraph.")
+```
 
- - Python 3.12+ (tested in CI). 3.14 validated locally.
- - `pip install -r requirements.txt`
-
-## Getting Started
-
-1. Install dependencies
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. Run the dev server
-
-   ```bash
-   python app.py
-   ```
-
-   Open http://127.0.0.1:5173
-
-3. Explore the starter pages (located in `templates/`)
-
-   - `/` → `templates/index.nml`
-   - `/users/123` → `templates/users/[id].nml` (dynamic param available as `{{ id }}`)
-   - `/counter` → optional minimal runtime demo (`/static/nml_runtime.js`)
-
-4. Edit and build in NML
-
-   - Author pages in `templates/*.nml`
-   - Define components in `components.nml` using `@define.Component` and call them with `@Component`
-   - Use slots (`@slot`, `@slot.name`) and props (`{{ prop.* }}`) inside components
-
-5. (Optional) Minimal client state
-
-   - Only if needed: include `/static/nml_runtime.js` and use `data-nml-bind` with simple `nml('set|inc|toggle ...')` commands
-   - See the section below for examples
-
-6. Compile with the CLI
-
-   ```bash
-   # install locally (editable) with dev extras
-   pip install -e .[dev]
-
-   # compile using the console script
-   nmlc templates/login-page.nml out.html
-
-   # with explicit components file
-   nmlc templates/login-page.nml out.html --components components.nml
-
-   # watch for changes (input/components)
-   nmlc templates/login-page.nml out.html --watch
-   ```
-
-7. (Optional) Config file (`nml.config.json`)
-
-   ```json
-   { "components": "components.nml" }
-   ```
-
-## Quick Examples
-
-- **Hello, World (NML vs HTML)**
-
-  ```
-  // NML
-  h1("Hello, World")
-  ```
-
-  ```html
-  <!-- HTML -->
+```html
+<div class="container" id="main">
   <h1>Hello, World</h1>
-  ```
+  <p>A paragraph.</p>
+</div>
+```
 
-- **Define and use a component with slots and props**
+### Template variables
 
-  ```
-  // components.nml
-  @define.Card
+```nml
+h1("Welcome, {{ name }}!")
+```
+
+Variables are **HTML-escaped by default**. Use `{{ var|raw }}` to opt out.
+
+### Components
+
+Define in `components.nml`, use anywhere:
+
+```nml
+@define.Card
     div.class("card")
-      div.class("header")
-        @slot.header
-      div.class("body")
-        @slot
-  ```
-
-  ```
-  // page.nml
-  @Card
-    @slot.header
-      h1("Title")
-    p("Body")
-  ```
-
-  Renders to:
-
-  ```html
-  <div class="card">
-    <div class="header"><h1>Title</h1></div>
-    <div class="body"><p>Body</p></div>
-  </div>
-  ```
-
-- **Routing: dynamic params in one file**
-
-  ```
-  // templates/users/[id].nml
-  p("User {{ id }}")
-  ```
-
-  Visit `/users/42` → `User 42`.
-
-- **Events in one line**
-
-  ```
-  button.on:click("alert('hi')")
-    | Click
-  ```
-
-  Renders to:
-
-  ```html
-  <button onclick="alert('hi')">Click</button>
-  ```
-
-- **Scoped CSS (automatic, only when used)**
-
-  ```
-  @define.Btn
-    button
-      @slot
+        div.class("card-header")
+            @slot.header
+        div.class("card-body")
+            @slot
     @style:
-      .btn { color: blue; }
-  ```
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; }
+```
 
-  The CSS is automatically scoped with a stable attribute and injected only if `@Btn` is used on the page.
+```nml
+@Card
+    @slot.header
+        h2("My Title")
+    p("Card body content.")
+```
 
- ## Routing (dev server)
+- **`@slot`** — default slot for child content
+- **`@slot.name`** — named slot with optional fallback content
+- **`@style:`** — scoped CSS block, stable `nml-c-xxxxxx` attribute auto-injected, styles only emitted if the component is used on the page
 
- - Mapping rules (relative to the `templates/` directory):
-   - `/` → `templates/index.nml`
-   - `/a/b` → `templates/a/b.nml`
-   - `/a/b/` → `templates/a/b/index.nml`
-   - Dynamic last segment: `/users/123` → `templates/users/[id].nml` with `{ id: "123" }`
-   - 404 fallback: if `templates/404.nml` exists, it will render for unknown routes
+### Props
 
- ## Event attributes
+```nml
+@define.Button
+    button.class("btn btn-{{ prop.kind }}")
+        | {{ prop.label }}
 
- - Shorthand for common event handlers:
-   - `on:click("...")` → `onclick="..."`
-   - `on:mouseover("...")` → `onmouseover="..."`
-   - Works on components too
+@Button.kind("primary").label("Save")
+```
 
-## Optional minimal client state (opt-in)
+### Events
 
-- Include the tiny runtime only if you need client-side state. The dev server serves `/static/nml_runtime.js` automatically.
+```nml
+button.on:click("handleClick()")
+    | Click me
+```
 
-  ```
-  head
-    script.src("/static/nml_runtime.js")
-  ```
+`on:*` maps directly to the equivalent `on*` HTML attribute.
 
-- Counter example (no initial state needed):
+### Doctype & full document
 
-  ```
-  button.on:click("nml('inc counter.count 1')")
-    | +
-  span.data-nml-bind("text:counter.count")
-  ```
+```nml
+doctype.html
+html.lang("en")
+    head
+        meta.charset("UTF-8")
+        title("{{ title }}")
+    body
+        h1("{{ heading }}")
+```
 
-- Simple input model + greeting:
+### Comments
 
-  ```
-  input.data-nml-bind("value:form.name").on:input("nml('set form.name ' + this.value)")
-  p
-    | Hello 
-    span.data-nml-bind("text:form.name")
-  ```
+```nml
+// This is a comment — not rendered
+div
+    // Nested comment
+    p("visible")
+```
 
-- API (string commands):
-  - `nml('set path value')`
-  - `nml('inc path [amount]')`
-  - `nml('toggle path')`
-  - Bindings via `data-nml-bind="text:path"` or `value:path`.
+---
 
- ## Authoring basics
+## MCP Server (AI Assistant Integration)
 
- - Elements and attributes:
+The `@nml/mcp-server` exposes three tools to any MCP-compatible AI assistant (Windsurf, Claude, Cursor, Zed):
 
-   ```
-   div.class("box").id("main")
-     p("Hello")
-   ```
+| Tool | Description |
+|---|---|
+| `nml_compile` | Compile NML source → HTML with optional context variables |
+| `nml_lint` | Validate NML syntax, return errors with `line:column` |
+| `nml_list_components` | Parse a `components.nml` file, return `@define` names + slot/style/prop metadata |
 
- - Components and slots:
+### Add to Windsurf
 
-   ```
-   @define.Card
-     div.card
-       div.header
-         @slot.header
-       div.body
-         @slot
-       div.footer
-         @slot.footer
-   ```
+In `~/.codeium/windsurf/mcp_config.json`:
 
-   ```
-   @Card
-     @slot.header
-       h1("Title")
-     p("Body content")
-   ```
+```json
+{
+  "mcpServers": {
+    "nml": {
+      "command": "bun",
+      "args": ["run", "/absolute/path/to/NML/packages/mcp-server/src/index.ts"],
+      "disabled": false,
+      "env": {}
+    }
+  }
+}
+```
 
- - Props:
+Restart Windsurf. The three NML tools will be available to Cascade automatically.
 
-   ```
-   @define.Button
-     button.type("button").class("btn btn-{{ prop.kind }}")
-       | {{ prop.label }}
+### Add to Claude Desktop
 
-   @Button.kind("primary").label("Click me")
-   ```
+In `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
- - Events:
+```json
+{
+  "mcpServers": {
+    "nml": {
+      "command": "bun",
+      "args": ["run", "/absolute/path/to/NML/packages/mcp-server/src/index.ts"]
+    }
+  }
+}
+```
 
-   ```
-   // on:click maps to onclick
-   button.on:click("doIt()")
+Restart Claude Desktop. The tools appear automatically in Claude's tool list.
 
-   // Works on components too
-   @define.Btn
-     button
-       @slot
+### Add to Cursor
 
-   @Btn.on:click("go()")
-     | Click
-   ```
+In `~/.cursor/mcp.json` (or via **Cursor Settings → MCP**):
 
- - Scoped CSS:
+```json
+{
+  "mcpServers": {
+    "nml": {
+      "command": "bun",
+      "args": ["run", "/absolute/path/to/NML/packages/mcp-server/src/index.ts"]
+    }
+  }
+}
+```
 
-   ```
-   @define.PixelBox
-     div
-       @slot
-     @style:
-       .pixel-box { border: 1px solid #000; }
-   ```
+### Add to Zed
 
- ## Security
+In your Zed `settings.json` (macOS: `~/.config/zed/settings.json`):
 
- - Variables are escaped by default. Use `|raw` only when you fully trust the content.
+```json
+{
+  "context_servers": {
+    "nml": {
+      "command": {
+        "path": "bun",
+        "args": ["run", "/absolute/path/to/NML/packages/mcp-server/src/index.ts"]
+      }
+    }
+  }
+}
+```
 
- ## Testing
+### Add to any MCP-compatible client
 
- - Run tests: `pytest -q`
+The server communicates over **stdio** (standard input/output) — it works with any client that supports the MCP stdio transport:
 
- ## CI
+```
+command: bun
+args:    ["run", "/absolute/path/to/NML/packages/mcp-server/src/index.ts"]
+```
 
- - GitHub Actions workflow runs tests on push/PR.
+---
 
- ## Notes
+## Compiler API
 
- - Indentation: NML uses 4-space indentation.
- - Roadmap: See `Project Roadmap.md` for phases and upcoming work.
+```ts
+import { nmlCompiler } from "@nml/compiler-ts";
+
+const html = nmlCompiler.render('h1("Hello")', { name: "World" });
+```
+
+### Custom adapter
+
+```ts
+import type { CompilerAdapter } from "@nml/compiler-ts";
+
+class MyCompiler implements CompilerAdapter {
+  render(input: string, context = {}) { ... }
+}
+```
+
+### Low-level
+
+```ts
+import { buildAst, generateHtml, NMLParserError } from "@nml/compiler-ts";
+
+try {
+  const ast = buildAst(source);
+  const html = generateHtml(ast, 0, context);
+} catch (err) {
+  if (err instanceof NMLParserError) {
+    console.error(`${err.loc.line}:${err.loc.column} — ${err.message}`);
+  }
+}
+```
+
+---
+
+## Edge Worker (Hono + Cloudflare Workers)
+
+The `worker-template` package is a ready-to-use scaffold:
+
+```
+worker-template/
+  worker/index.ts       Hono app — render NML inline, add API routes
+  views/index.nml       Default view
+  components.nml        Component definitions
+  vite.config.ts        Vite + vite-plugin-nml, proxy to localhost:8787
+  wrangler.jsonc        Cloudflare Workers config
+```
+
+```bash
+cd packages/worker-template
+bun install
+bun run dev             # Wrangler dev + Vite
+bun run deploy          # wrangler deploy
+```
+
+---
+
+## Development
+
+```bash
+# Install all workspace deps
+bun install
+
+# Run tests in a specific package
+cd packages/compiler-ts && bun run test
+cd packages/cli         && bun run test
+cd packages/vite-plugin-nml && bun run test
+cd packages/mcp-server  && bun run test
+```
+
+**Test counts:** compiler-ts (111) · cli (34) · vite-plugin-nml (14) · mcp-server (16) = **175 total**
+
+---
+
+## Design Principles
+
+- **Server-rendered by default.** Pages render instantly and work without JavaScript.
+- **No VDOM, no hydration.** NML → HTML is a pure function.
+- **Components are simple.** Input + slots → HTML. Scoped styles injected only when used.
+- **Interactivity is progressive.** Use native HTML, `on:*` events, HTMX, or Alpine.js — your choice.
+- **Toolchain is thin.** Bun + Vite + Wrangler. No webpack, no Babel, no framework runtime.
+- **AI-native.** The MCP server makes NML a first-class tool for AI coding assistants.
+
+---
+
+## Roadmap
+
+See [`Project Roadmap.md`](Project%20Roadmap.md).

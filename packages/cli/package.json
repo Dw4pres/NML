@@ -1,0 +1,23 @@
+{
+  "name": "@nml/cli",
+  "version": "2.2.0",
+  "type": "module",
+  "bin": {
+    "nml": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "nml": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "@nml/compiler-ts": "workspace:*",
+    "@nml/router": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0"
+  }
+}

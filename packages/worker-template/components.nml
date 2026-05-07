@@ -1,0 +1,11 @@
+// Define reusable components here
+// Example:
+// @define.Card
+//     div.class("card")
+//         @slot
+//     @style:
+//         .card {
+//             border: 1px solid #ccc;
+//             padding: 1rem;
+//             border-radius: 0.5rem;
+//         }

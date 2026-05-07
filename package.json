@@ -1,0 +1,12 @@
+{
+  "name": "nml",
+  "version": "2.2.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test:all": "bun run --filter '*' test",
+    "typecheck": "bun run --filter '*' tsc --noEmit"
+  }
+}
