@@ -2,7 +2,7 @@
 
 > **Name:** Neat Markup Language (NML) · **Extension:** `.nml`
 >
-> *"Simple and effective when written, but a powerhouse under the hood."*
+> 
 
 Our goal: a component-based web framework that abstracts away repetitive HTML/CSS syntax, enabling rapid development of clean, modern web applications — with zero client-side bloat.
 
@@ -190,9 +190,6 @@ Our goal: a component-based web framework that abstracts away repetitive HTML/CS
 - [x] **39 new tests** in `each-if-filters.test.ts`
 - [x] **Total: 261 tests**
 
----
-
-## 🚀 The Path to 1.0
 
 ### Phase 12 — Stabilize & Ship 🔄
 

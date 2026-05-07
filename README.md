@@ -337,7 +337,7 @@ worker-template/
 
 ## 🗺️ Roadmap
 
-See [`Project Roadmap.md`](Project%20Roadmap.md).
+See [`Project Roadmap.md`](docs/Project%20Roadmap.md).
 
 ---
 
