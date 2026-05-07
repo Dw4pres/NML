@@ -4,10 +4,11 @@
   "description": "NML command-line interface — init, dev, build, test, deploy",
   "type": "module",
   "bin": {
-    "nml": "./dist/index.js"
+    "nml": "./src/index.ts"
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -26,8 +27,8 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@nml/compiler-ts": "2.2.0",
-    "@nml/router": "2.2.0"
+    "@nml/compiler-ts": "workspace:*",
+    "@nml/router": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^2.0.0",

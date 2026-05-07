@@ -4,10 +4,11 @@
   "description": "NML MCP server — nml_compile, nml_lint, nml_list_components tools for AI assistants",
   "type": "module",
   "bin": {
-    "nml-mcp": "./dist/index.js"
+    "nml-mcp": "./src/index.ts"
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -26,7 +27,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@nml/compiler-ts": "2.2.0",
+    "@nml/compiler-ts": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "devDependencies": {
