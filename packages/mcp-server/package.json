@@ -1,17 +1,32 @@
 {
   "name": "@nml/mcp-server",
   "version": "2.2.0",
+  "description": "NML MCP server — nml_compile, nml_lint, nml_list_components tools for AI assistants",
   "type": "module",
   "bin": {
-    "nml-mcp": "./src/index.ts"
+    "nml-mcp": "./dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "start": "bun run src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dw4pres/NML.git",
+    "directory": "packages/mcp-server"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "dependencies": {
-    "@nml/compiler-ts": "workspace:*",
+    "@nml/compiler-ts": "2.2.0",
     "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "devDependencies": {

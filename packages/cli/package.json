@@ -1,18 +1,33 @@
 {
   "name": "@nml/cli",
   "version": "2.2.0",
+  "description": "NML command-line interface — init, dev, build, test, deploy",
   "type": "module",
   "bin": {
-    "nml": "./src/index.ts"
+    "nml": "./dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "nml": "bun run src/index.ts"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dw4pres/NML.git",
+    "directory": "packages/cli"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "dependencies": {
-    "@nml/compiler-ts": "workspace:*",
-    "@nml/router": "workspace:*"
+    "@nml/compiler-ts": "2.2.0",
+    "@nml/router": "2.2.0"
   },
   "devDependencies": {
     "vitest": "^2.0.0",

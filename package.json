@@ -7,6 +7,7 @@
   ],
   "scripts": {
     "test:all": "bun run --filter '*' test",
+    "build:all": "bun run --filter '@nml/compiler-ts' build && bun run --filter '@nml/router' build && bun run --filter 'vite-plugin-nml' build && bun run --filter '@nml/cli' build && bun run --filter '@nml/mcp-server' build",
     "typecheck": "bun run --filter '*' tsc --noEmit"
   }
 }

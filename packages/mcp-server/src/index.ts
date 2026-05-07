@@ -97,7 +97,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     case "nml_compile": {
       const source = String(input.source ?? "");
       const context = (input.context ?? {}) as Record<string, unknown>;
-      const result = compile(source, context);
+      const result = await compile(source, context);
 
       if (result.ok) {
         return {
