@@ -14,8 +14,6 @@
 
 **The Zero-Bloat, Agent-Optimized Edge Framework.**
 
-> "Simple and effective when written, but a powerhouse under the hood."
-
 NML is a component-first markup language that compiles to clean HTML. Write less boilerplate than plain HTML, get scoped CSS, named slots, template variables, and a full edge-ready toolchain — without a heavy client framework runtime.
 
 ## ✨ The "Aha!" Moment
