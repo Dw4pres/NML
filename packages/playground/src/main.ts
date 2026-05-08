@@ -101,9 +101,9 @@ monaco.languages.setMonarchTokensProvider("nml", {
     root: [
       [/\/\/.*$/, "comment"],
       [/\{\{[^}]*\}\}/, "variable"],
-      [/@define\.[A-Z][A-Za-z0-9]*/, "keyword-define"],
-      [/@(each|endeach|if|else|endif|slot|style|include)\b/, "keyword"],
-      [/@[A-Z][A-Za-z0-9]*/, "type"],
+      [/[@]define\.[A-Z][A-Za-z0-9]*/, "keyword-define"],
+      [/[@](each|endeach|if|else|endif|slot|style|include)\b/, "keyword"],
+      [/[@][A-Z][A-Za-z0-9]*/, "type"],
       [/doctype\.html/, "keyword"],
       [/\|/, "operator"],
       [/\.[a-zA-Z][\w-]*(?=\()/, "attribute"],
