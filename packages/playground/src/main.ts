@@ -109,8 +109,10 @@ monaco.languages.setMonarchTokensProvider("nml", {
     // Monarch calls this state fresh each line if we're in it.
     // We consume the entire remaining line in one token, then pop.
     content: [
-      [/\{\{[^}]*\}\}/, "variable"],
-      [/.+/, { token: "", next: "root" }],
+      [/[^{]+/, ""],                                    // plain text up to {{ or EOL
+      [/\{\{[^}]*\}\}/, "variable"],                    // {{ var }} highlighted
+      [/\{/, ""],                                       // lone { passes through
+      [/$/, { token: "", next: "root" }],               // EOL → back to root
     ],
   },
 });
