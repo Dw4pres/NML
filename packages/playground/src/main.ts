@@ -98,17 +98,19 @@ monaco.languages.setMonarchTokensProvider("nml", {
       [/[@](each|endeach|if|else|endif|slot|style|include)\b/, "keyword"],
       [/[@][A-Z][A-Za-z0-9]*/, "type"],
       [/doctype\.html/, "keyword"],
-      // Pipe: push content state for rest of line, auto-pops next line
+      // Pipe: switch to content state; content always transitions back to root
       [/\|/, { token: "operator", next: "content" }],
       [/\.[a-zA-Z][\w-]*(?=\()/, "attribute"],
       [/"[^"]*"/, "string"],
       [/'[^']*'/, "string"],
       [/[a-z][\w-]*\b/, "tag"],
     ],
+    // Content state: entered via @push, so @pop returns to root.
+    // Monarch calls this state fresh each line if we're in it.
+    // We consume the entire remaining line in one token, then pop.
     content: [
       [/\{\{[^}]*\}\}/, "variable"],
-      [/[^{\n]+/, ""],
-      [/$/, { token: "", next: "root" }],
+      [/.+/, { token: "", next: "root" }],
     ],
   },
 });
