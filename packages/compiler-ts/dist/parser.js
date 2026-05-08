@@ -5,7 +5,13 @@
  *
  * Every ASTNode carries loc: { line, column } sourced from the lexer.
  */
-import { createHash } from "crypto";
+/** Browser-compatible djb2 hash — replaces Node crypto for scope IDs. */
+function shortHash(str) {
+    let h = 5381;
+    for (let i = 0; i < str.length; i++)
+        h = ((h << 5) + h) ^ str.charCodeAt(i);
+    return (h >>> 0).toString(16).slice(0, 6).padStart(6, "0");
+}
 export class NMLParserError extends Error {
     loc;
     constructor(message, loc = { line: 0, column: 0 }) {
@@ -428,7 +434,7 @@ function expandComponentsPass(nodes, components, globalStyles) {
                     }
                 }
                 const toHash = `${componentName}|${styleRaw}`;
-                const digest = createHash("sha1").update(toHash).digest("hex").slice(0, 6);
+                const digest = shortHash(toHash);
                 const scopeId = `nml-c-${digest}`;
                 const { componentAst, scopedCss } = extractScopedStyle(node.children, scopeId);
                 if (scopedCss) {

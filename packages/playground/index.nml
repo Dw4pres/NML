@@ -63,5 +63,5 @@ html.lang("en")
                 div.class("pane-label preview")
                     span
                     | Live Preview
-                iframe.id("preview-frame").sandbox("allow-scripts allow-same-origin").title("NML Preview")
+                iframe.id("preview-frame").sandbox("allow-scripts").title("NML Preview")
         script.type("module").src("/src/main.ts")
