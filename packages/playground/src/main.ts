@@ -103,7 +103,7 @@ monaco.languages.setMonarchTokensProvider("nml", {
       [/\.[a-zA-Z][\w-]*(?=\()/, "attribute"],
       [/"[^"]*"/, "string"],
       [/'[^']*'/, "string"],
-      [/[a-z][\w-]*(?=[\s.(|]|$)/, "tag"],
+      [/[a-z][\w-]*\b/, "tag"],
     ],
     content: [
       [/\{\{[^}]*\}\}/, "variable"],
