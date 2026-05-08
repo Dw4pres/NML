@@ -6,54 +6,63 @@ import { nmlCompiler, NMLParserError } from "@nml-lang/compiler-ts";
 // ---------------------------------------------------------------------------
 
 const DEMO_SOURCE = `// NML Interactive Test Bench — live demo
-// Edit anything on the left, preview updates in real time.
+// Edit anything on the left, preview updates instantly.
+// Note: template variables use flat context keys (no dot-property access).
 
-@define.UserCard
-    div.class("card")
-        div.class("card-header")
-            h3 | {{ name }}
-            span.class("role-badge") | {{ role|uppercase }}
-        div.class("card-body")
-            p | {{ bio|default("No bio provided.") }}
-        div.class("card-footer")
-            button.hx-get("/api/users/{{ name }}").hx-target("#detail").class("btn") | View Profile
-            @if(active)
-                span.class("status active") | ● Online
-            @else
-                span.class("status") | ○ Offline
-            @endif
+@define.StatCard
+    @style:
+        .stat { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:1.25rem; }
+        .stat-value { font-size:2rem; font-weight:700; color:#58a6ff; }
+        .stat-label { font-size:.8rem; color:#64748b; text-transform:uppercase; letter-spacing:.06em; margin-top:.25rem; }
+    div.class("stat")
+        div.class("stat-value") | {{ value }}
+        div.class("stat-label") | {{ label }}
 
 doctype.html
 html
     head
-        title | NML Test Bench — Live Preview
+        title | NML Test Bench
+        script.src("https://unpkg.com/htmx.org@1.9.12")
         style
-            | * { box-sizing: border-box; margin: 0; padding: 0; }
-            | body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; padding: 2rem; }
-            | h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: .25rem; color: #f8fafc; }
-            | .subtitle { color: #94a3b8; margin-bottom: 2rem; font-size: .875rem; }
-            | .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
-            | .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; overflow: hidden; }
-            | .card-header { padding: .875rem 1rem; background: #0f172a; display: flex; justify-content: space-between; align-items: center; }
-            | .card-header h3 { font-size: 1rem; font-weight: 600; }
-            | .role-badge { font-size: .65rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; background: #3b82f6; color: #fff; border-radius: 4px; letter-spacing: .06em; }
-            | .card-body { padding: 1rem; font-size: .875rem; color: #94a3b8; }
-            | .card-footer { padding: .75rem 1rem; border-top: 1px solid #334155; display: flex; gap: .5rem; align-items: center; }
-            | .btn { font-size: .8rem; padding: .35rem .75rem; background: #3b82f6; color: #fff; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; }
-            | .btn:hover { background: #2563eb; }
-            | .status { font-size: .75rem; color: #64748b; margin-left: auto; }
-            | .status.active { color: #22c55e; }
-            | #detail { margin-top: 2rem; padding: 1rem; background: #1e293b; border-radius: 10px; min-height: 60px; color: #94a3b8; font-size: .875rem; }
-            | footer { margin-top: 3rem; text-align: center; font-size: .75rem; color: #475569; }
+            | * { box-sizing:border-box; margin:0; padding:0; }
+            | body { font-family:system-ui,sans-serif; background:#0f172a; color:#e2e8f0; padding:2rem; }
+            | h1 { font-size:1.75rem; font-weight:800; color:#f8fafc; margin-bottom:.25rem; }
+            | .subtitle { color:#64748b; font-size:.875rem; margin-bottom:2rem; }
+            | .stats { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:1rem; margin-bottom:2rem; }
+            | h2 { font-size:1rem; font-weight:600; color:#94a3b8; margin-bottom:1rem; text-transform:uppercase; letter-spacing:.06em; }
+            | .list { display:flex; flex-direction:column; gap:.5rem; }
+            | .item { background:#1e293b; border:1px solid #334155; border-radius:8px; padding:.75rem 1rem; display:flex; justify-content:space-between; align-items:center; }
+            | .badge { font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:4px; background:#3b82f6; color:#fff; }
+            | .badge.admin { background:#8b5cf6; }
+            | .badge.offline { background:#374151; color:#9ca3af; }
+            | .btn { font-size:.8rem; padding:.3rem .7rem; background:#1d4ed8; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+            | footer { margin-top:3rem; text-align:center; font-size:.75rem; color:#334155; }
     body
-        h1 | Team Directory
-        p.class("subtitle") | Rendered by NML compiler · HTMX-ready attributes pre-wired
-        div.class("grid")
-            @each(users as user)
-                @UserCard.name("{{ user.name }}").role("{{ user.role }}").bio("{{ user.bio }}").active("{{ user.active }}")
+        h1 | ⚡ NML Test Bench
+        p.class("subtitle") | Live compiler output · Edit the source on the left
+
+        // Stats row — each component gets flat context vars
+        div.class("stats")
+            @each(stats as s)
+                @StatCard.value("{{ s }}").label("{{ s }}")
             @endeach
-        div.id("detail") | ← Click "View Profile" (requires HTMX in production)
-        footer | Built with ⚡ NML · Zero client-side JS bundled
+
+        // Team list with @if / @else for online status
+        h2 | Team
+        div.class("list")
+            @each(team as member)
+                div.class("item")
+                    span | {{ member }}
+                    @if(onlineSet)
+                        span.class("badge") | Online
+                    @else
+                        span.class("badge offline") | Offline
+                    @endif
+                    button.hx-get("/api/profile").hx-target("#detail").hx-swap("innerHTML").class("btn") | View
+            @endeach
+
+        div.id("detail").class("item").style("margin-top:1rem;color:#475569;") | ← Click View to load profile (HTMX)
+        footer | Built with NML · Zero client JS · HTMX-native
 `;
 
 // ---------------------------------------------------------------------------
@@ -61,12 +70,9 @@ html
 // ---------------------------------------------------------------------------
 
 const MOCK_CONTEXT = {
-  users: [
-    { name: "Alice Chen", role: "Admin", bio: "Platform architect and NML core contributor.", active: true },
-    { name: "Bob Torres", role: "Engineer", bio: "Full-stack developer specialising in edge deployments.", active: true },
-    { name: "Cara Lin", role: "Designer", bio: "UX lead. Builds design systems with zero bloat.", active: false },
-    { name: "Dan Park", role: "DevRel", bio: "", active: true },
-  ],
+  stats: ["4", "261", "2.2.1", "5ms"],
+  team: ["Alice Chen", "Bob Torres", "Cara Lin", "Dan Park"],
+  onlineSet: true,
 };
 
 // ---------------------------------------------------------------------------
