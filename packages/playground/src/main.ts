@@ -98,21 +98,20 @@ monaco.languages.setMonarchTokensProvider("nml", {
       [/[@](each|endeach|if|else|endif|slot|style|include)\b/, "keyword"],
       [/[@][A-Z][A-Za-z0-9]*/, "type"],
       [/doctype\.html/, "keyword"],
-      // Pipe: switch to content state; content always transitions back to root
+      // Pipe content: match | then everything to EOL as plain text.
+      // Variables inside content won't be highlighted (acceptable trade-off
+      // vs the state-machine approach that bleeds across lines).
       [/\|/, { token: "operator", next: "content" }],
       [/\.[a-zA-Z][\w-]*(?=\()/, "attribute"],
       [/"[^"]*"/, "string"],
       [/'[^']*'/, "string"],
       [/[a-z][\w-]*\b/, "tag"],
     ],
-    // Content state: entered via @push, so @pop returns to root.
-    // Monarch calls this state fresh each line if we're in it.
-    // We consume the entire remaining line in one token, then pop.
     content: [
-      [/[^{]+/, ""],                                    // plain text up to {{ or EOL
-      [/\{\{[^}]*\}\}/, "variable"],                    // {{ var }} highlighted
-      [/\{/, ""],                                       // lone { passes through
-      [/$/, { token: "", next: "root" }],               // EOL → back to root
+      // Highlight {{ vars }}, then consume rest as plain text, always return to root
+      [/\{\{[^}]*\}\}/, "variable"],
+      [/[^{]+/, { token: "source", next: "root" }],
+      [/\{/, { token: "source", next: "root" }],
     ],
   },
 });
@@ -130,6 +129,7 @@ monaco.editor.defineTheme("nml-dark", {
     { token: "attribute", foreground: "e3b341" },
     { token: "operator", foreground: "ff7b72" },
     { token: "string", foreground: "a5d6ff" },
+    { token: "source", foreground: "e6edf3" },
   ],
   colors: {
     "editor.background": "#0d1117",
