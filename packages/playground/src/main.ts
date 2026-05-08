@@ -98,11 +98,19 @@ monaco.languages.setMonarchTokensProvider("nml", {
       [/[@](each|endeach|if|else|endif|slot|style|include)\b/, "keyword"],
       [/[@][A-Z][A-Za-z0-9]*/, "type"],
       [/doctype\.html/, "keyword"],
-      [/\|/, "operator"],
+      // Pipe operator — switch to content state so text after | is plain
+      [/\|/, { token: "operator", next: "@content" }],
       [/\.[a-zA-Z][\w-]*(?=\()/, "attribute"],
       [/"[^"]*"/, "string"],
       [/'[^']*'/, "string"],
       [/[a-z][\w-]*(?=[\s.(|]|$)/, "tag"],
+    ],
+    content: [
+      // Template variables are still highlighted inside content
+      [/\{\{[^}]*\}\}/, "variable"],
+      // Everything else is plain text until EOL
+      [/[^{]+/, ""],
+      [/$/, "", "@pop"],
     ],
   },
 });
