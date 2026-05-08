@@ -7,16 +7,15 @@ import { nmlCompiler, NMLParserError } from "@nml-lang/compiler-ts";
 
 const DEMO_SOURCE = `// NML Interactive Test Bench — live demo
 // Edit anything on the left, preview updates instantly.
-// Note: template variables use flat context keys (no dot-property access).
 
-@define.StatCard
+// @define creates a reusable component. Children go into @slot.
+@define.Card
     @style:
-        .stat { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:1.25rem; }
-        .stat-value { font-size:2rem; font-weight:700; color:#58a6ff; }
-        .stat-label { font-size:.8rem; color:#64748b; text-transform:uppercase; letter-spacing:.06em; margin-top:.25rem; }
-    div.class("stat")
-        div.class("stat-value") | {{ value }}
-        div.class("stat-label") | {{ label }}
+        .card { background:#1e293b; border:1px solid #334155; border-radius:10px; overflow:hidden; }
+        .card-body { padding:1rem; }
+    div.class("card")
+        div.class("card-body")
+            @slot
 
 doctype.html
 html
@@ -28,41 +27,41 @@ html
             | body { font-family:system-ui,sans-serif; background:#0f172a; color:#e2e8f0; padding:2rem; }
             | h1 { font-size:1.75rem; font-weight:800; color:#f8fafc; margin-bottom:.25rem; }
             | .subtitle { color:#64748b; font-size:.875rem; margin-bottom:2rem; }
-            | .stats { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:1rem; margin-bottom:2rem; }
-            | h2 { font-size:1rem; font-weight:600; color:#94a3b8; margin-bottom:1rem; text-transform:uppercase; letter-spacing:.06em; }
-            | .list { display:flex; flex-direction:column; gap:.5rem; }
-            | .item { background:#1e293b; border:1px solid #334155; border-radius:8px; padding:.75rem 1rem; display:flex; justify-content:space-between; align-items:center; }
-            | .badge { font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:4px; background:#3b82f6; color:#fff; }
-            | .badge.admin { background:#8b5cf6; }
-            | .badge.offline { background:#374151; color:#9ca3af; }
-            | .btn { font-size:.8rem; padding:.3rem .7rem; background:#1d4ed8; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+            | h2 { font-size:1rem; font-weight:700; color:#94a3b8; letter-spacing:.06em; text-transform:uppercase; margin:1.5rem 0 .75rem; }
+            | .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1rem; }
+            | .card { background:#1e293b; border:1px solid #334155; border-radius:10px; overflow:hidden; }
+            | .card-body { padding:1rem; }
+            | .name { font-weight:600; margin-bottom:.25rem; }
+            | .tag { display:inline-block; font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:4px; background:#3b82f6; color:#fff; margin-right:.35rem; }
+            | .tag.offline { background:#374151; color:#94a3b8; }
+            | .tag.admin { background:#8b5cf6; }
+            | .row { display:flex; align-items:center; gap:.5rem; margin-top:.5rem; }
+            | .btn { font-size:.8rem; padding:.3rem .7rem; background:#1d4ed8; color:#fff; border:none; border-radius:6px; cursor:pointer; margin-left:auto; }
+            | #detail { margin-top:1.5rem; padding:1rem; background:#1e293b; border:1px solid #334155; border-radius:8px; color:#64748b; font-size:.875rem; }
             | footer { margin-top:3rem; text-align:center; font-size:.75rem; color:#334155; }
     body
-        h1 | ⚡ NML Test Bench
-        p.class("subtitle") | Live compiler output · Edit the source on the left
+        h1 | ⚡ NML Playground
+        p.class("subtitle") | Live compiler output · HTMX attributes pre-wired · Edit me!
 
-        // Stats row — each component gets flat context vars
-        div.class("stats")
-            @each(stats as s)
-                @StatCard.value("{{ s }}").label("{{ s }}")
-            @endeach
-
-        // Team list with @if / @else for online status
-        h2 | Team
-        div.class("list")
+        // @each loops over arrays. The loop var is available as {{ member }}.
+        h2 | Team Directory
+        div.class("grid")
             @each(team as member)
-                div.class("item")
-                    span | {{ member }}
-                    @if(onlineSet)
-                        span.class("badge") | Online
-                    @else
-                        span.class("badge offline") | Offline
-                    @endif
-                    button.hx-get("/api/profile").hx-target("#detail").hx-swap("innerHTML").class("btn") | View
+                @Card
+                    p.class("name") | {{ member }}
+                    div.class("row")
+                        // @if / @else for conditional rendering
+                        @if(onlineSet)
+                            span.class("tag") | Online
+                        @else
+                            span.class("tag offline") | Away
+                        @endif
+                        span.class("tag admin") | Engineer
+                        button.hx-get("/api/profile").hx-target("#detail").hx-swap("innerHTML").class("btn") | View
             @endeach
 
-        div.id("detail").class("item").style("margin-top:1rem;color:#475569;") | ← Click View to load profile (HTMX)
-        footer | Built with NML · Zero client JS · HTMX-native
+        div.id("detail") | ← Click View to load a profile (HTMX handles the request)
+        footer | Built with ⚡ NML · Zero client-side JS · HTMX-native
 `;
 
 // ---------------------------------------------------------------------------
@@ -70,7 +69,6 @@ html
 // ---------------------------------------------------------------------------
 
 const MOCK_CONTEXT = {
-  stats: ["4", "261", "2.2.1", "5ms"],
   team: ["Alice Chen", "Bob Torres", "Cara Lin", "Dan Park"],
   onlineSet: true,
 };
