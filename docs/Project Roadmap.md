@@ -232,16 +232,34 @@ Our goal: a component-based web framework that abstracts away repetitive HTML/CS
 - [x] **6 new tests** (handleHotUpdate × 4, HMR client injection × 2) · **20 vite-plugin tests total**
 - [x] `@nml-lang/vite-plugin@2.2.1` built and ready to publish
 
-### Phase 14 — Ecosystem Adapters 📋
+### Phase 14 — Interactive Playground ✅
 
-**14A — `@nml-lang/express`**
+*Browser-based live compiler with Monaco editor — dogfoods `index.nml` as the shell.*
+
+- [x] `packages/playground/` — standalone Vite app
+- [x] `index.nml` — playground shell written in NML (dogfooding), compiled by inline Vite plugin
+- [x] `src/main.ts` — Monaco editor with custom NML Monarch tokenizer + `nml-dark` theme:
+  - Syntax highlighting: tags (green), directives (red/orange/purple), attributes (yellow), strings (light blue), variables (blue), pipe content (white), comments (grey)
+  - State-machine tokenizer: `content` state after `|` prevents tag rule bleeding into pipe text
+- [x] 50ms debounced compile loop — `nmlCompiler.render()` → live `srcdoc` iframe preview
+- [x] Compile time + output size metrics in header
+- [x] Parse error display in preview pane with line/column
+- [x] Demo source: `@define.Card` component, `@each` loop, `@if`/`@else`, HTMX `hx-get`, scoped `@style:`
+- [x] **Isomorphic compiler fixes** (unblocked browser usage):
+  - Replaced `crypto.createHash` with inline djb2 hash (browser has no Node crypto)
+  - Replaced `path.dirname/join/resolve` with inline helpers (browser has no Node path)
+- [x] `@nml-lang/compiler-ts@2.2.1` published with isomorphic fixes
+
+### Phase 15 — Ecosystem Adapters 📋
+
+**15A — `@nml-lang/express`**
 - [ ] `createExpressHandler(opts)` → `RequestHandler`
 
-**14B — `@nml-lang/react`** *(lower priority)*
+**15B — `@nml-lang/react`** *(lower priority)*
 - [ ] `renderNml(src, ctx)` → string usable inside Server Components
 - [ ] Evaluate zero-bloat tradeoff before implementing
 
-### Phase 15 — Language Sugar 🔮 *(deferred)*
+### Phase 16 — Language Sugar 🔮 *(deferred)*
 
 > Achievable today via `@if` chains + pre-formatted context. Defer until user feedback confirms necessity.
 
