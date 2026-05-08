@@ -1,6 +1,6 @@
 {
   "name": "@nml-lang/compiler-ts",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "NML compiler — parse and render .nml templates to HTML",
   "type": "module",
   "main": "./src/index.ts",
