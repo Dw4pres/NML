@@ -25,7 +25,9 @@ html.lang("en")
             |   font-weight: 800; padding: 2px 7px; border-radius: 4px; letter-spacing: .05em; }
             | .metrics { font-size: 12px; color: var(--muted);
             |   font-family: "SFMono-Regular", Consolas, monospace; white-space: nowrap;
-            |   display: flex; gap: 16px; }
+            |   display: flex; align-items: center; gap: 6px; }
+            | .metric-label { color: var(--muted); }
+            | .metric-sep { color: var(--border); margin: 0 4px; }
             | .metric-value { color: var(--accent); font-weight: 600; }
             | #error-badge { display: none; background: var(--accent2); color: #0d1117;
             |   font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px;
@@ -48,10 +50,11 @@ html.lang("en")
                 span.class("logo-badge") | NML
                 | Interactive Test Bench
             div.class("metrics")
-                span | Compile Time: 
-                    span.class("metric-value").id("m-time") | 0.00ms
-                span | Output Size: 
-                    span.class("metric-value").id("m-size") | 0 bytes
+                span.class("metric-label") | Compile Time
+                span.class("metric-value").id("m-time") | 0.00ms
+                span.class("metric-sep") | ·
+                span.class("metric-label") | Output Size
+                span.class("metric-value").id("m-size") | 0 bytes
                 span.id("error-badge") | PARSE ERROR
         div.class("workspace")
             div.class("pane")
