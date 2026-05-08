@@ -327,7 +327,18 @@ export function parseLineRaw(rawLine: string, loc: SourceLocation): ASTNode {
     return parseLine(line, loc);
   }
 
-  const adjusted = workLine.startsWith(".") ? "div" + workLine : workLine;
+  // Split pipe content before element/chain parsing
+  // e.g. `h1 | Hello` → element line `h1`, inline content `Hello`
+  // e.g. `div.class("x") | Hello` → chain `div.class("x")`, content `Hello`
+  let pipeContent = "";
+  let workLineNoPipe = workLine;
+  const pipeIdx = workLine.indexOf(" | ");
+  if (pipeIdx !== -1) {
+    workLineNoPipe = workLine.slice(0, pipeIdx);
+    pipeContent = workLine.slice(pipeIdx + 3).trim();
+  }
+
+  const adjusted = workLineNoPipe.startsWith(".") ? "div" + workLineNoPipe : workLineNoPipe;
   const firstParen = adjusted.indexOf("(");
   const firstDot = findFirstUnquotedDot(adjusted);
 
@@ -364,7 +375,8 @@ export function parseLineRaw(rawLine: string, loc: SourceLocation): ASTNode {
   }
 
   const chain = adjusted.slice(chainStart);
-  const { attributes, content } = parseAttributeChain(chain, loc);
+  const { attributes, content: chainContent } = parseAttributeChain(chain, loc);
+  const content = pipeContent || chainContent;
   const node = makeNode(element, attributes, content, [], loc);
   if (isMultiline) node.multiline_trigger = true;
   return node;
