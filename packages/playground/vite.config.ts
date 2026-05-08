@@ -20,7 +20,10 @@ function nmlShellPlugin(): Plugin {
         if (req.url !== "/" && req.url !== "/index.html") return next();
         try {
           const src = await readFile(nmlEntry, "utf-8");
-          const html = await nmlCompiler.render(src, {});
+          const raw = await nmlCompiler.render(src, {});
+          // Run through Vite's HTML pipeline so it injects the HMR client
+          // and resolves/processes <script type="module"> tags correctly.
+          const html = await server.transformIndexHtml(req.url!, raw);
           res.setHeader("Content-Type", "text/html");
           res.end(html);
         } catch (e) {
