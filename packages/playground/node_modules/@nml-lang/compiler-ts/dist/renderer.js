@@ -7,7 +7,26 @@
  * read files from the filesystem, Cloudflare R2, D1, or memory.
  */
 import { buildAst, renderVariables, isTruthy, NMLParserError } from "./parser.js";
-import { dirname, join, resolve } from "path";
+/** Minimal browser-compatible path helpers (used only by @include, never in browser). */
+function dirname(p) {
+    const i = p.replace(/\\/g, "/").lastIndexOf("/");
+    return i === -1 ? "." : p.slice(0, i);
+}
+function join(...parts) {
+    return parts.join("/").replace(/\/+/g, "/");
+}
+function resolve(...parts) {
+    const segments = [];
+    for (const part of parts) {
+        for (const seg of part.replace(/\\/g, "/").split("/")) {
+            if (seg === "..")
+                segments.pop();
+            else if (seg !== ".")
+                segments.push(seg);
+        }
+    }
+    return segments.join("/");
+}
 const INDENT_WIDTH = 4;
 const VOID_ELEMENTS = new Set([
     "area", "base", "br", "col", "embed", "hr", "img", "input",
