@@ -1,10 +1,10 @@
 {
   "name": "@nml-lang/mcp-server",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "NML MCP server — nml_compile, nml_lint, nml_list_components tools for AI assistants",
   "type": "module",
   "bin": {
-    "nml-mcp": "./src/index.ts"
+    "nml-mcp": "src/index.ts"
   },
   "files": [
     "dist",
@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Dw4pres/NML.git",
+    "url": "git+https://github.com/Dw4pres/NML.git",
     "directory": "packages/mcp-server"
   },
   "license": "MIT",
