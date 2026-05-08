@@ -101,7 +101,7 @@ monaco.languages.setMonarchTokensProvider("nml", {
     root: [
       [/\/\/.*$/, "comment"],
       [/\{\{[^}]*\}\}/, "variable"],
-      [/@define\.[A-Z][A-Za-z0-9]*/, "keyword.define"],
+      [/@define\.[A-Z][A-Za-z0-9]*/, "keyword-define"],
       [/@(each|endeach|if|else|endif|slot|style|include)\b/, "keyword"],
       [/@[A-Z][A-Za-z0-9]*/, "type"],
       [/doctype\.html/, "keyword"],
@@ -120,7 +120,7 @@ monaco.editor.defineTheme("nml-dark", {
   rules: [
     { token: "comment", foreground: "6e7681", fontStyle: "italic" },
     { token: "keyword", foreground: "ff7b72", fontStyle: "bold" },
-    { token: "keyword.define", foreground: "ffa657", fontStyle: "bold" },
+    { token: "keyword-define", foreground: "ffa657", fontStyle: "bold" },
     { token: "type", foreground: "d2a8ff" },
     { token: "variable", foreground: "79c0ff" },
     { token: "tag", foreground: "7ee787" },
