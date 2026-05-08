@@ -1,4 +1,5 @@
 import * as monaco from "monaco-editor";
+import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker&inline";
 import { nmlCompiler, NMLParserError } from "@nml-lang/compiler-ts";
 
 // ---------------------------------------------------------------------------
@@ -57,7 +58,7 @@ html
                             span.class("tag offline") | Away
                         @endif
                         span.class("tag admin") | Engineer
-                        button.hx-get("/api/profile").hx-target("#detail").hx-swap("innerHTML").class("btn") | View
+                        button.hx-get("https://jsonplaceholder.typicode.com/users/1").hx-target("#detail").hx-swap("innerHTML").class("btn") | View
             @endeach
 
         div.id("detail") | ← Click View to load a profile (HTMX handles the request)
@@ -77,20 +78,12 @@ const MOCK_CONTEXT = {
 // Monaco setup
 // ---------------------------------------------------------------------------
 
-// Worker setup — required by Monaco for standalone usage with Vite
+// Worker setup — inline blob workers avoid URL resolution issues with
+// the custom NML shell middleware (no import.meta.url path assumptions).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (self as any).MonacoEnvironment = {
-  getWorker(_: unknown, label: string) {
-    if (label === "editorWorkerService") {
-      return new Worker(
-        new URL("monaco-editor/esm/vs/editor/editor.worker", import.meta.url),
-        { type: "module" }
-      );
-    }
-    return new Worker(
-      new URL("monaco-editor/esm/vs/editor/editor.worker", import.meta.url),
-      { type: "module" }
-    );
+  getWorker() {
+    return new EditorWorker();
   },
 };
 
