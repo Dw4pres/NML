@@ -16,6 +16,14 @@
 
 NML is a component-first markup language that compiles to clean HTML. Write less boilerplate than plain HTML, get scoped CSS, named slots, template variables, and a full edge-ready toolchain — without a heavy client framework runtime.
 
+## 🎮 Try it Out
+
+**[→ Open the Interactive Playground](https://nml-playground.pages.dev)**
+
+Write NML in the browser — see compiled HTML update live. No install required.
+
+---
+
 ## ✨ The "Aha!" Moment
 
 Write 60% less code. Eliminate closing tags, braces, and client-side JS bloat. NML natively understands HTMX and Alpine.js, absorbing the mental overhead so you (and your AI agents) can move faster.

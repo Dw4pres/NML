@@ -1,0 +1,7 @@
+{
+  "name": "nml-playground",
+  "compatibility_date": "2024-09-23",
+  "pages_build_output_dir": "./dist"
+  // Deploy: bun run build && wrangler pages deploy
+  // Or connect this repo in the Cloudflare dashboard → Pages → nml-playground
+}
