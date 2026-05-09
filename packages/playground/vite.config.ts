@@ -1,5 +1,5 @@
 import { defineConfig, type Plugin } from "vite";
-import { readFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 import { resolve } from "path";
 import { nmlCompiler } from "@nml-lang/compiler-ts";
 
@@ -33,11 +33,11 @@ function nmlShellPlugin(): Plugin {
       });
     },
 
-    // Build: emit compiled index.nml as index.html
-    async generateBundle() {
+    // Build: write compiled NML → index.html on disk so Rollup can resolve it
+    async buildStart() {
       const src = await readFile(nmlEntry, "utf-8");
       const html = await nmlCompiler.render(src, {});
-      this.emitFile({ type: "asset", fileName: "index.html", source: html });
+      await writeFile(resolve(__dirname, "index.html"), html, "utf-8");
     },
   };
 }
