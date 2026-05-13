@@ -259,13 +259,40 @@ Our goal: a component-based web framework that abstracts away repetitive HTML/CS
 - [ ] `renderNml(src, ctx)` → string usable inside Server Components
 - [ ] Evaluate zero-bloat tradeoff before implementing
 
-### Phase 16 — Language Sugar 🔮 *(deferred)*
+### Phase 16 — Language Improvements � *(user feedback-driven)*
 
-> Achievable today via `@if` chains + pre-formatted context. Defer until user feedback confirms necessity.
+> Based on real-world usage from early adopters and AI agents.
 
+**16A — Syntax Ergonomics**
+- [ ] `@else if` directive to reduce nesting indentation
+- [ ] Fenced literal blocks for code/raw HTML: ```html ... ```
+- [ ] Auto-resolution of component definitions (remove ordering requirement)
+
+**16B — Component System Enhancements**
+- [ ] Typed component props with default values (consider zero-bloat impact)
+- [ ] Component prop validation at compile time
+
+**16C — Language Sugar *(lower priority)*
 - [ ] `@switch` / `@case` directive
-- [ ] `@set(varName, expr)` for computed locals
+- [ ] `@set(varName, expr)` for computed locals  
 - [ ] Multi-filter chains: `{{ val|trim|uppercase }}`
+
+---
+
+## 🎯 User Feedback Highlights
+
+**What Works Well:**
+- MCP integration with `nml_lint` provides instant validation for AI agents
+- Dot-chaining attributes (`.href("/").class("text-white")`) is more readable than HTML
+- Component system (`@define`/`@slot`/props) hits the sweet spot of minimal abstraction
+- `@each`/`@if` truthiness rules eliminate empty-array rendering bugs
+- `|json` filter for Alpine.js shows real-world consideration
+
+**Areas for Improvement:**
+- Missing `@else if` creates nested `@if`/`@else` chains
+- Code blocks require manual HTML escaping (`&lt;`, `&gt;`)
+- Component props are stringly-typed with no compile-time validation
+- Component definition ordering is a footgun for newcomers
 
 ---
 
