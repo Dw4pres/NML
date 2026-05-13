@@ -11,7 +11,7 @@
     "hono": "^4.0.0"
   },
   "devDependencies": {
-    "@nml-lang/vite-plugin": "workspace:*",
+    "@nml-lang/vite-plugin": "^2.2.1",
     "vite": "^5.0.0",
     "wrangler": "^3.0.0"
   }
