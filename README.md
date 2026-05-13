@@ -19,10 +19,14 @@
 
 | Feature | NML | React/Next.js |
 |---|---|---|
+| **Total LOC** | 81 | 170 |
+| **Feature-only LOC** | 64 | 130 |
 | **Bundle Size** | 0 KB (no JS runtime) | 42-250 KB |
-| **Lines of Code** | 48% less | 100% baseline |
+| **Files Required** | 5 | 9 |
 | **Page Load** | Instant (server-rendered) | 200-800ms (hydration) |
-| **Interactivity** | HTMX/Alpine (optional) | Component state |
+| **Interactivity** | HTMX attributes (declarative) | Component state (imperative) |
+
+*Based on benchmark: User Directory with Refresh + Delete mutations*
 
 # ⚡ NML (Neat Markup Language)
 
