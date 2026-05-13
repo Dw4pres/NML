@@ -296,4 +296,4 @@ Our goal: a component-based web framework that abstracts away repetitive HTML/CS
 
 ---
 
-*282 tests passing · All packages published · CI green*
+*283 tests passing · All packages published · CI green*
