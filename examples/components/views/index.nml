@@ -1,0 +1,87 @@
+doctype.html
+html
+    head
+        title | NML Components Showcase
+        style | 
+            body { font-family: system-ui; margin: 2rem; background: #f8fafc; }
+            .container { max-width: 800px; margin: 0 auto; }
+            .showcase { display: grid; gap: 2rem; }
+            .component-group { display: grid; gap: 1rem; }
+            .button-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+            .badge-group { display: flex; gap: 0.5rem; align-items: center; }
+            h1 { color: #1e293b; }
+            h2 { color: #334155; }
+            .demo-section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    
+    body
+        .container
+            h1 | NML Components Showcase
+            
+            .showcase
+                // Basic Card with title and content
+                @Card.title("Welcome to Components")
+                    p | This is a Card component with a title. Cards are containers for related content.
+                    p | They can contain any content, including other components!
+                
+                // Card without title (just content)
+                @Card
+                    p | This Card has no title prop, so it only shows the content slot.
+                
+                // Button variants showcase
+                @Card.title("Buttons")
+                    .button-group
+                        @Button.label("Default")
+                        @Button.kind("primary").label("Primary")
+                        @Button.kind("secondary").label("Secondary")
+                
+                // Alert variants showcase
+                @Card.title("Alerts")
+                    .component-group
+                        @Alert.kind("info").title("Info")
+                            | This is an informational alert message.
+                        
+                        @Alert.kind("success").title("Success")
+                            | Your changes have been saved successfully!
+                        
+                        @Alert.kind("warning").title("Warning")
+                            | Please review your input before proceeding.
+                        
+                        @Alert.kind("error").title("Error")
+                            | Something went wrong. Please try again.
+                
+                // Badge showcase
+                @Card.title("Badges")
+                    .badge-group
+                        span | Status:
+                        @Badge.text("default")
+                        @Badge.kind("primary").text("new")
+                        @Badge.kind("success").text("active")
+                        @Badge.kind("warning").text("pending")
+                        @Badge.kind("error").text("error")
+                
+                // Nested components example
+                @Card.title("Nested Components")
+                    .component-group
+                        @Alert.kind("info")
+                            | This alert is inside a Card component.
+                            .badge-group
+                                span | Tags:
+                                @Badge.kind("primary").text("nested")
+                                @Badge.kind("success").text("awesome")
+                        
+                        .button-group
+                            @Button.kind("primary").label("Save Changes")
+                            @Button.kind("secondary").label("Cancel")
+                
+                // Component with props and slots
+                @Card.title("Interactive Example")
+                    p | Here's a more complex example showing props and slots working together:
+                    .component-group
+                        @Alert.kind("success").title("Component System")
+                            | NML components support:
+                            ul
+                                li | Scoped CSS with @style:
+                                li | Props via {{ prop.* }}
+                                li | Default and named slots
+                                li | Component nesting
+                                li | Zero runtime overhead

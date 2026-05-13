@@ -1,0 +1,18 @@
+{
+  "name": "components-nml",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "deploy": "vite build && wrangler pages deploy dist --project-name components-nml"
+  },
+  "dependencies": {
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "@nml-lang/vite-plugin": "workspace:*",
+    "vite": "^5.0.0",
+    "wrangler": "^3.0.0"
+  }
+}

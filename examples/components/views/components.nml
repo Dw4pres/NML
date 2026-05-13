@@ -1,0 +1,136 @@
+@define.Card
+    div.class("card")
+        @if(prop.title)
+            .card-header
+                h3 | {{ prop.title }}
+        .card-body
+            @slot
+    @style:
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        .card-header {
+            background: #f8fafc;
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .card-header h3 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 1.125rem;
+        }
+        .card-body {
+            padding: 1rem;
+        }
+
+@define.Button
+    button.class("btn btn-{{ prop.kind || 'default' }}").type("{{ prop.type || 'button' }}")
+        | {{ prop.label || 'Button' }}
+    @style:
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-default {
+            background: #6b7280;
+            color: white;
+        }
+        .btn-default:hover {
+            background: #4b5563;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #1f2937;
+            border: 1px solid #d1d5db;
+        }
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+@define.Alert
+    div.class("alert alert-{{ prop.kind || 'info' }}")
+        @if(prop.title)
+            .alert-title
+                strong | {{ prop.title }}
+        .alert-message
+            @slot
+    @style:
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        .alert-info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+        }
+        .alert-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+        .alert-warning {
+            background: #fffbeb;
+            border: 1px solid #fed7aa;
+            color: #92400e;
+        }
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+        .alert-title {
+            margin-bottom: 0.5rem;
+        }
+        .alert-message:last-child {
+            margin-bottom: 0;
+        }
+
+@define.Badge
+    span.class("badge badge-{{ prop.kind || 'default' }}")
+        | {{ prop.text }}
+    @style:
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            text-transform: uppercase;
+        }
+        .badge-default {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .badge-primary {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }

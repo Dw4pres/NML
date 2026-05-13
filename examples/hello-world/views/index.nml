@@ -1,0 +1,17 @@
+doctype.html
+html
+    head
+        title | Hello NML
+        style | 
+            body { font-family: system-ui; margin: 2rem; background: #f8fafc; }
+            .container { max-width: 600px; margin: 0 auto; }
+            h1 { color: #1e293b; }
+            .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    
+    body
+        .container
+            h1 | Hello, NML! 🎉
+            .card
+                p | This is a minimal NML application running on Hono + Cloudflare Workers.
+                p | No JavaScript framework required — just clean HTML compiled from NML.
+                p | Edit this file in <code>views/index.nml</code> to see changes.
