@@ -30,7 +30,7 @@
 
 # ⚡ NML (Neat Markup Language)
 
-**The Zero-Bloat, Agent-Optimized Edge Framework.**
+**The Minimal-Overhead, Agent-Optimized Edge Framework.**
 
 NML is a component-first markup language that compiles to clean HTML. Write less boilerplate than plain HTML, get scoped CSS, named slots, template variables, and a full edge-ready toolchain — without a heavy client framework runtime.
 

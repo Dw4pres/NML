@@ -4,7 +4,7 @@ Thank you for your interest in contributing to NML! This document explains how t
 
 ## Project Philosophy
 
-**NML is strictly zero-bloat.** Our core mission is to provide a component-first markup language that compiles to clean HTML with no client-side JavaScript runtime.
+**NML is designed for minimal overhead.** Our core mission is to provide a component-first markup language that compiles to clean HTML with no mandatory client-side JavaScript runtime.
 
 ### What we accept
 - Bug fixes and performance improvements
