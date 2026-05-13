@@ -14,14 +14,14 @@
 ## 📊 Why NML?
 
 **52% fewer lines of code** vs equivalent React/Next.js apps.  
-**0 KB client-side JavaScript** — pure HTML with optional HTMX/Alpine.  
+**No JavaScript framework runtime** — pure HTML with optional HTMX (14KB) or Alpine.js (15KB).  
 **Instant page loads** with no hydration or VDOM reconciliation.
 
 | Feature | NML | React/Next.js |
 |---|---|---|
 | **Total LOC** | 81 | 170 |
 | **Feature-only LOC** | 64 | 130 |
-| **Bundle Size** | 0 KB (no JS runtime) | 42-250 KB |
+| **Bundle Size** | 0-15 KB (optional HTMX/Alpine) | 42-250 KB |
 | **Files Required** | 5 | 9 |
 | **Page Load** | Instant (server-rendered) | 200-800ms (hydration) |
 | **Interactivity** | HTMX attributes (declarative) | Component state (imperative) |
