@@ -1,10 +1,10 @@
 {
   "name": "@nml-lang/cli",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "NML command-line interface — init, dev, build, test, deploy",
   "type": "module",
   "bin": {
-    "nml": "./src/index.ts"
+    "nml": "./dist/index.js"
   },
   "files": [
     "dist",
