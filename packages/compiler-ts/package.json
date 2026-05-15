@@ -1,15 +1,13 @@
 {
   "name": "@nml-lang/compiler-ts",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "NML compiler — parse and render .nml templates to HTML",
   "type": "module",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.d.ts",
   "exports": {
     ".": {
-      "bun": "./src/index.ts",
-      "source": "./src/index.ts",
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
