@@ -5,6 +5,7 @@
  *
  * Every ASTNode carries loc: { line, column } sourced from the lexer.
  */
+import { tokenize, NMLLexerError } from "./lexer.js";
 /** Browser-compatible djb2 hash — replaces Node crypto for scope IDs. */
 function shortHash(str) {
     let h = 5381;
