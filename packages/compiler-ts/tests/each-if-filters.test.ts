@@ -221,6 +221,89 @@ describe("@if", () => {
 });
 
 // ---------------------------------------------------------------------------
+// @else if / @elseif
+// ---------------------------------------------------------------------------
+
+describe("@else if", () => {
+  it("renders @else if branch when @if is falsy and @elseif is truthy", async () => {
+    const src = `@if(show)\n    div("Yes")\n@else if(alt)\n    div("Maybe")\n@endif`;
+    const html = await render(src, { show: false, alt: true });
+    expect(strip(html)).toContain("<div>Maybe</div>");
+    expect(strip(html)).not.toContain("<div>Yes</div>");
+  });
+
+  it("skips @else if when @if is truthy", async () => {
+    const src = `@if(show)\n    div("Yes")\n@else if(alt)\n    div("Maybe")\n@endif`;
+    const html = await render(src, { show: true, alt: true });
+    expect(strip(html)).toContain("<div>Yes</div>");
+    expect(strip(html)).not.toContain("<div>Maybe</div>");
+  });
+
+  it("chained @else if: first matching branch wins", async () => {
+    const src = `@if(a)\n    div("A")\n@else if(b)\n    div("B")\n@else if(c)\n    div("C")\n@endif`;
+    const html = await render(src, { a: false, b: true, c: true });
+    expect(strip(html)).toContain("<div>B</div>");
+    expect(strip(html)).not.toContain("<div>A</div>");
+    expect(strip(html)).not.toContain("<div>C</div>");
+  });
+
+  it("chained @else if: second matching when first is falsy", async () => {
+    const src = `@if(a)\n    div("A")\n@else if(b)\n    div("B")\n@else if(c)\n    div("C")\n@endif`;
+    const html = await render(src, { a: false, b: false, c: true });
+    expect(strip(html)).toContain("<div>C</div>");
+    expect(strip(html)).not.toContain("<div>A</div>");
+    expect(strip(html)).not.toContain("<div>B</div>");
+  });
+
+  it("chained @else if with trailing @else: falls through to @else", async () => {
+    const src = `@if(a)\n    div("A")\n@else if(b)\n    div("B")\n@else if(c)\n    div("C")\n@else\n    div("None")\n@endif`;
+    const html = await render(src, { a: false, b: false, c: false });
+    expect(strip(html)).toContain("<div>None</div>");
+    expect(strip(html)).not.toContain("<div>A</div>");
+    expect(strip(html)).not.toContain("<div>B</div>");
+    expect(strip(html)).not.toContain("<div>C</div>");
+  });
+
+  it("nested @else if inside @each", async () => {
+    const src = `@each(items as item)
+    @if(item.active)
+        span("Active")
+    @else if(item.pending)
+        span("Pending")
+    @else
+        span("Inactive")
+    @endif
+@endeach`;
+    const html = await render(src, {
+      items: [
+        { active: false, pending: true },
+        { active: false, pending: false },
+      ],
+    });
+    expect(strip(html)).toContain("<span>Pending</span>");
+    expect(strip(html)).toContain("<span>Inactive</span>");
+  });
+
+  it("postProcessConditionalsPass groups @elseif into @if.elseifBranch", () => {
+    const src = `@if(a)
+    div("A")
+@else if(b)
+    div("B")
+@else
+    div("C")
+@endif`;
+    const ast = buildAst(src);
+    expect(ast).toHaveLength(1);
+    expect(ast[0].element).toBe("@if");
+    expect(ast[0].children).toHaveLength(1);
+    expect(ast[0].elseifBranch).toHaveLength(1);
+    expect(ast[0].elseifBranch![0].element).toBe("@elseif");
+    expect(ast[0].elseifBranch![0].children).toHaveLength(1);
+    expect(ast[0].elseBranch).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Filter pipeline
 // ---------------------------------------------------------------------------
 

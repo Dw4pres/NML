@@ -108,6 +108,12 @@ export function parseLine(rawContent, loc) {
             return makeNode("@if", { condition }, "", [], loc);
         }
         if (candidate === "@else") {
+            const afterElse = spaceIdx !== -1 ? line.slice(spaceIdx + 1).trimStart() : "";
+            // @else if(condition) or @else if
+            if (afterElse.startsWith("if")) {
+                const condition = extractParenContent(line) ?? "";
+                return makeNode("@elseif", { condition }, "", [], loc);
+            }
             return makeNode("@else", {}, "", [], loc);
         }
         if (candidate === "@endif") {
@@ -450,7 +456,7 @@ function expandComponentsPass(nodes, components, globalStyles) {
             continue; // @define never added to output AST
         }
         // Process @ComponentName calls
-        if (element.startsWith("@") && element !== "@define" && element !== "@slot" && element !== "@style" && element !== "@include" && element !== "@each" && element !== "@endeach" && element !== "@if" && element !== "@else" && element !== "@endif") {
+        if (element.startsWith("@") && element !== "@define" && element !== "@slot" && element !== "@style" && element !== "@include" && element !== "@each" && element !== "@endeach" && element !== "@if" && element !== "@elseif" && element !== "@else" && element !== "@endif") {
             const componentName = element.slice(1);
             if (!(componentName in components)) {
                 throw new NMLParserError(`Undefined component: '@${componentName}' not found.`, node.loc);
@@ -794,6 +800,13 @@ export function postProcessConditionalsPass(nodes) {
             // Recurse into then-branch children first
             node.children = postProcessConditionalsPass(node.children);
             let j = i + 1;
+            // Consume zero or more @elseif siblings
+            node.elseifBranch = [];
+            while (j < nodes.length && nodes[j].element === "@elseif") {
+                nodes[j].children = postProcessConditionalsPass(nodes[j].children);
+                node.elseifBranch.push(nodes[j]);
+                j++;
+            }
             // Consume optional @else sibling
             if (j < nodes.length && nodes[j].element === "@else") {
                 node.elseBranch = postProcessConditionalsPass(nodes[j].children);
@@ -831,6 +844,11 @@ export function postProcessConditionalsPass(nodes) {
         }
         if (node.elseBranch && node.elseBranch.length > 0) {
             node.elseBranch = postProcessConditionalsPass(node.elseBranch);
+        }
+        if (node.elseifBranch && node.elseifBranch.length > 0) {
+            for (const branch of node.elseifBranch) {
+                branch.children = postProcessConditionalsPass(branch.children);
+            }
         }
         result.push(node);
         i++;

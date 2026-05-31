@@ -32,6 +32,8 @@ export interface ASTNode {
   __context__?: Record<string, unknown>;
   /** Set by postProcessConditionalsPass on @if nodes: the else-branch children */
   elseBranch?: ASTNode[];
+  /** Set by postProcessConditionalsPass on @if nodes: chained @elseif nodes */
+  elseifBranch?: ASTNode[];
 }
 
 export type ComponentMap = Record<string, ASTNode[]>;
@@ -153,6 +155,12 @@ export function parseLine(rawContent: string, loc: SourceLocation): ASTNode {
     }
 
     if (candidate === "@else") {
+      const afterElse = spaceIdx !== -1 ? line.slice(spaceIdx + 1).trimStart() : "";
+      // @else if(condition) or @else if
+      if (afterElse.startsWith("if")) {
+        const condition = extractParenContent(line) ?? "";
+        return makeNode("@elseif", { condition }, "", [], loc);
+      }
       return makeNode("@else", {}, "", [], loc);
     }
 
@@ -569,7 +577,7 @@ function expandComponentsPass(
     }
 
     // Process @ComponentName calls
-    if (element.startsWith("@") && element !== "@define" && element !== "@slot" && element !== "@style" && element !== "@include" && element !== "@each" && element !== "@endeach" && element !== "@if" && element !== "@else" && element !== "@endif") {
+    if (element.startsWith("@") && element !== "@define" && element !== "@slot" && element !== "@style" && element !== "@include" && element !== "@each" && element !== "@endeach" && element !== "@if" && element !== "@elseif" && element !== "@else" && element !== "@endif") {
       const componentName = element.slice(1);
 
       if (!(componentName in components)) {
@@ -976,6 +984,14 @@ export function postProcessConditionalsPass(nodes: ASTNode[]): ASTNode[] {
 
       let j = i + 1;
 
+      // Consume zero or more @elseif siblings
+      node.elseifBranch = [];
+      while (j < nodes.length && nodes[j].element === "@elseif") {
+        nodes[j].children = postProcessConditionalsPass(nodes[j].children);
+        node.elseifBranch.push(nodes[j]);
+        j++;
+      }
+
       // Consume optional @else sibling
       if (j < nodes.length && nodes[j].element === "@else") {
         node.elseBranch = postProcessConditionalsPass(nodes[j].children);
@@ -1023,6 +1039,11 @@ export function postProcessConditionalsPass(nodes: ASTNode[]): ASTNode[] {
     }
     if (node.elseBranch && node.elseBranch.length > 0) {
       node.elseBranch = postProcessConditionalsPass(node.elseBranch);
+    }
+    if (node.elseifBranch && node.elseifBranch.length > 0) {
+      for (const branch of node.elseifBranch) {
+        branch.children = postProcessConditionalsPass(branch.children);
+      }
     }
 
     result.push(node);

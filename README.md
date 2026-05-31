@@ -152,6 +152,18 @@ NML uses Python-like truthiness. Empty arrays `[]` and empty strings `""` evalua
     p | No items found.
 ```
 
+Chain conditions with `@else if`:
+
+```nml
+@if(user.isAdmin)
+    span | Admin
+@else if(user.isModerator)
+    span | Moderator
+@else
+    span | User
+@endif
+```
+
 ### Components
 
 Define in `components.nml`, use anywhere:

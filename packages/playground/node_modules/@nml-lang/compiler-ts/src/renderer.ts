@@ -92,6 +92,20 @@ export async function generateHtml(
       const condVal = resolveContextPath(condition, nodeContext);
       if (isTruthy(condVal)) {
         html += await generateHtml(node.children, indentLevel, nodeContext, opts);
+      } else if (node.elseifBranch && node.elseifBranch.length > 0) {
+        let matched = false;
+        for (const elseifNode of node.elseifBranch) {
+          const elseifCond = elseifNode.attributes["condition"] as string;
+          const elseifCondVal = resolveContextPath(elseifCond, nodeContext);
+          if (isTruthy(elseifCondVal)) {
+            html += await generateHtml(elseifNode.children, indentLevel, nodeContext, opts);
+            matched = true;
+            break;
+          }
+        }
+        if (!matched && node.elseBranch && node.elseBranch.length > 0) {
+          html += await generateHtml(node.elseBranch, indentLevel, nodeContext, opts);
+        }
       } else if (node.elseBranch && node.elseBranch.length > 0) {
         html += await generateHtml(node.elseBranch, indentLevel, nodeContext, opts);
       }
@@ -99,7 +113,7 @@ export async function generateHtml(
     }
 
     // Internal structural nodes — skip (defensive: @else/@endif/@endeach removed by pass)
-    if (["@define", "@slot", "@style", "__comment__", "__root__", "@else", "@endif", "@endeach"].includes(node.element)) {
+    if (["@define", "@slot", "@style", "__comment__", "__root__", "@else", "@elseif", "@endif", "@endeach"].includes(node.element)) {
       continue;
     }
 

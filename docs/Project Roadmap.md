@@ -264,7 +264,7 @@ Our goal: a component-based web framework that abstracts away repetitive HTML/CS
 > Based on real-world usage from early adopters and AI agents.
 
 **16A — Syntax Ergonomics**
-- [ ] `@else if` directive to reduce nesting indentation
+- [x] `@else if` directive to reduce nesting indentation
 - [ ] Fenced literal blocks for code/raw HTML: ```html ... ```
 - [ ] Auto-resolution of component definitions (remove ordering requirement)
 

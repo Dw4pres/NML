@@ -20,6 +20,8 @@ export interface ASTNode {
     __context__?: Record<string, unknown>;
     /** Set by postProcessConditionalsPass on @if nodes: the else-branch children */
     elseBranch?: ASTNode[];
+    /** Set by postProcessConditionalsPass on @if nodes: chained @elseif nodes */
+    elseifBranch?: ASTNode[];
 }
 export type ComponentMap = Record<string, ASTNode[]>;
 export type GlobalStyles = Record<string, string>;
