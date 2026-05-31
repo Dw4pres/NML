@@ -8,7 +8,7 @@
   <a href="https://www.npmjs.com/package/@nml-lang/cli"><img src="https://img.shields.io/npm/v/%40nml-lang%2Fcli?label=%40nml-lang%2Fcli&color=000" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/@nml-lang/vite-plugin"><img src="https://img.shields.io/npm/v/%40nml-lang%2Fvite-plugin?label=%40nml-lang%2Fvite-plugin&color=000" alt="npm version"></a>
   <img src="https://img.shields.io/badge/runtime-Bun-f472b6" alt="Bun">
-  <img src="https://img.shields.io/badge/deploy-Cloudflare%20Workers-f38020" alt="Cloudflare Workers">
+  <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/Dw4pres/NML&subdirectory=packages/worker-template"><img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare Workers"></a>
 </p>
 
 ## 📊 Why NML?
