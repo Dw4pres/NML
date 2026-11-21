@@ -32,7 +32,7 @@
 
 **The Minimal-Overhead, Agent-Optimized Edge Framework.**
 
-NML is a component-first markup language that compiles to clean HTML. Write less boilerplate than plain HTML, get scoped CSS, named slots, template variables, and a full edge-ready toolchain — without a heavy client framework runtime.
+NML is a component-first markup language that compiles to clean HTML. Write less boilerplate than plain HTML, get scoped CSS, named slots, template variables, declared state, and a full edge-ready toolchain — without a heavy client framework runtime.
 
 ## 🎮 Try it Out
 
@@ -227,6 +227,25 @@ button.on:click("handleClick()")
     | Click me
 ```
 
+### State (`@state`)
+
+Declare client state at the top of a file — stateful apps use the same templates as stateless ones, and files with no `@state` render exactly as before, with zero client JavaScript.
+
+```nml
+@state.count(0)
+@state.items(["a", "b"])
+
+p | Count: {{ count }}
+button.on:click("count++") | Increment
+button.on:click("count = 0") | Reset
+```
+
+Declared state seeds the render context, so `{{ }}`, `@if`, and `@each` work with it like any other variable. Handlers that touch declared state become `data-nml-action` attributes instead of inline `on*` handlers; anything else passes through unchanged. The compiler also serializes the initial state into a `<script type="application/json" data-nml-state>` payload for the client runtime to pick up.
+
+> ⚠️ **Runtime coming soon:** the compiler support is live, but `data-nml-action` is inert until the `@nml-lang/state` client runtime lands. For live interactivity today, use HTMX or Alpine.
+
+v1 limits: file-level state only (no component-local state), one state action per element, no comparison expressions in `@if`. Full reference: [`docs/templating.md`](docs/templating.md).
+
 ## 🧠 AI-Native (MCP Server)
 
 The `@nml-lang/mcp-server` exposes tools to any MCP-compatible AI assistant (Windsurf, Claude, Cursor, Zed) so it can write and validate NML flawlessly:
@@ -362,6 +381,8 @@ worker-template/
 * **No VDOM, no hydration:** NML → HTML is a pure function.
 
 * **Components are simple:** Input + slots → HTML. Scoped styles injected only when used.
+
+* **State is declared, not hidden:** `@state` lives at the top of the file where anyone can read it, and every mutation is visible at the event site. Files without it ship zero client JS.
 
 * **Interactivity is progressive:** Use native HTML, `on:*` events, HTMX, or Alpine.js.
 
