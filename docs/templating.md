@@ -121,7 +121,7 @@ button.on:click("count++") | Increment
 ### Client Runtime — `@nml-lang/state`
 
 `data-nml-action` attributes are live. The runtime (`@nml-lang/state`,
-`dist/index.js` ~7.9KB) mounts a view's `render` function onto the
+`dist/index.js` ~13KB) mounts a view's `render` function onto the
 server-rendered page: it listens for `click`, `change`, and `submit` on
 `document`, finds the closest `[data-nml-action]`, applies the action to
 the current state, re-renders, and patches the DOM. No VDOM, no store, no

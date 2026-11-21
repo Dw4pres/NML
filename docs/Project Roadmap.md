@@ -304,7 +304,7 @@ Our goal: a component-based web framework that abstracts away repetitive HTML/CS
 - [x] **Total: 223 tests in compiler-ts** (183 existing + 40 new in `state.test.ts`)
 
 **17D — Client Runtime (`@nml-lang/state`)** ✅
-- [x] New package `@nml-lang/state` v2.2.0, no runtime dependencies, built `dist/index.js` 7,904 bytes (≤ 8KB budget)
+- [x] New package `@nml-lang/state` v2.2.0, no runtime dependencies, built `dist/index.js` 13,051 bytes (comments kept so JSDoc survives in the `.d.ts`)
 - [x] `mountNmlState({ render, initial, root? })` → `{ getState(), setState(patch), destroy() }`; document-level click/change/submit delegation, `data-nml-event` (default `"click"`), `preventDefault()` on handled actions
 - [x] Pure `applyAction(state, action)` returning a new state object; supported forms `name++`, `name--`, `name = <literal>`, `name = !name`, `name = <arithmetic>`; anything else throws `NmlStateError` with action + code + reason
 - [x] DOMParser patch (full page → replace `document.body` children, keeping `<head>`; fragment → `root.innerHTML`); focus restore by id (inputs without id lose focus — known v1 limit, DOM morphing is the follow-up)
