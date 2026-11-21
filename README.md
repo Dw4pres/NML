@@ -242,7 +242,7 @@ button.on:click("count = 0") | Reset
 
 Declared state seeds the render context, so `{{ }}`, `@if`, and `@each` work with it like any other variable. Handlers that touch declared state become `data-nml-action` attributes instead of inline `on*` handlers; anything else passes through unchanged. The compiler also serializes the initial state into a `<script type="application/json" data-nml-state>` payload for the client runtime to pick up.
 
-> ⚠️ **Runtime coming soon:** the compiler support is live, but `data-nml-action` is inert until the `@nml-lang/state` client runtime lands. For live interactivity today, use HTMX or Alpine.
+> The `@nml-lang/state` runtime wires `data-nml-action` up: full-page files auto-mount through the Vite plugin, and fragments mount manually with `mountNmlState`. HTMX and Alpine still work alongside it for server-driven interactivity.
 
 v1 limits: file-level state only (no component-local state), one state action per element, no comparison expressions in `@if`. Full reference: [`docs/templating.md`](docs/templating.md).
 
@@ -323,6 +323,7 @@ In your Zed `settings.json` (macOS: `~/.config/zed/settings.json`):
 | Package | npm | Description |
 |---|---|---|
 | [`@nml-lang/compiler-ts`](packages/compiler-ts/) | [![npm](https://img.shields.io/npm/v/%40nml-lang%2Fcompiler-ts?color=000)](https://www.npmjs.com/package/@nml-lang/compiler-ts) | Core TS compiler — lexer, parser, renderer, CompilerAdapter |
+| [`@nml-lang/state`](packages/state/) | — | Minimal client runtime — mounts `@state`, wires `data-nml-action` |
 | [`@nml-lang/cli`](packages/cli/) | [![npm](https://img.shields.io/npm/v/%40nml-lang%2Fcli?color=000)](https://www.npmjs.com/package/@nml-lang/cli) | `nml` binary — init, dev, build, deploy, test commands |
 | [`@nml-lang/vite-plugin`](packages/vite-plugin-nml/) | [![npm](https://img.shields.io/npm/v/%40nml-lang%2Fvite-plugin?color=000)](https://www.npmjs.com/package/@nml-lang/vite-plugin) | Vite transform plugin — `*.nml` → ESM, HMR, HTML emission |
 | [`@nml-lang/router`](packages/router/) | [![npm](https://img.shields.io/npm/v/%40nml-lang%2Frouter?color=000)](https://www.npmjs.com/package/@nml-lang/router) | Universal routing layer (`views/` → URL mapping) |
