@@ -277,6 +277,32 @@ Our goal: a component-based web framework that abstracts away repetitive HTML/CS
 - [ ] `@set(varName, expr)` for computed locals  
 - [ ] Multi-filter chains: `{{ val|trim|uppercase }}`
 
+### Phase 17 — Client State (v1) ✅
+
+*Compiler-only. Establishes the contract the future client runtime consumes; no runtime in this phase.*
+
+**17A — `@state` Declarations** ✅
+- [x] `@state.<name>(<JSON value>)` at the top level of a file (number, string, boolean, null, array, object)
+- [x] Duplicate declaration → NMLParserError with line:column + fix hint
+- [x] Invalid JSON value → NMLParserError with line:column + fix hint
+- [x] `@state` inside `@define` → NMLParserError (component-local state not supported in v1)
+- [x] `@state` nested inside an element → NMLParserError (top level only)
+- [x] Declaration after first use → NMLParserError (declare before use)
+- [x] Declared state seeds the render context; explicit render() context wins on name collision
+
+**17B — SSR Payload** ✅
+- [x] `<script type="application/json" data-nml-state>` with the effective initial state, before `</body>` (or appended at end)
+- [x] Files with no @state render byte-identical to before (regression test)
+- [x] `<` escaped in the payload so string values can't break out of the script block
+
+**17C — State Actions** ✅
+- [x] `on:*` handlers referencing declared state translate to `data-nml-action`, inline `on*` removed
+- [x] Supported forms: `name++`, `name--`, `name = <literal>`, `name = !name`, `name = <arithmetic>`
+- [x] Unsupported form → NMLParserError naming the form and listing supported forms
+- [x] Assignment to an undeclared name → NMLParserError with "did you mean to declare @state.<name>?" hint
+- [x] Handlers not referencing state pass through unchanged; Alpine `x-on:*` untouched
+- [x] **Total: 222 tests in compiler-ts** (183 existing + 39 new in `state.test.ts`)
+
 ---
 
 ## 🎯 User Feedback Highlights

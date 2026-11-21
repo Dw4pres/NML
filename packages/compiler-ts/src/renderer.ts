@@ -7,7 +7,7 @@
  * read files from the filesystem, Cloudflare R2, D1, or memory.
  */
 
-import { buildAst, renderVariables, isTruthy, NMLParserError, type ASTNode } from "./parser.js";
+import { buildAst, buildAstWithState, renderVariables, isTruthy, NMLParserError, type ASTNode } from "./parser.js";
 
 /** Minimal browser-compatible path helpers (used only by @include, never in browser). */
 function dirname(p: string): string {
@@ -112,8 +112,9 @@ export async function generateHtml(
       continue;
     }
 
-    // Internal structural nodes — skip (defensive: @else/@endif/@endeach removed by pass)
-    if (["@define", "@slot", "@style", "__comment__", "__root__", "@else", "@elseif", "@endif", "@endeach"].includes(node.element)) {
+    // Internal structural nodes — skip (defensive: @else/@endif/@endeach removed by pass;
+    // @state nodes are stripped by the state pass, this is belt-and-braces)
+    if (["@define", "@slot", "@style", "@state", "__comment__", "__root__", "@else", "@elseif", "@endif", "@endeach"].includes(node.element)) {
       continue;
     }
 
@@ -239,13 +240,17 @@ async function resolveInclude(
       // Non-JSON override strings are silently ignored (may be complex expressions)
     }
   }
-  const partialContext = { ...parentContext, ...overrides };
-
-  // Parse and render the partial with child seen-set
+  // Parse and render the partial with child seen-set.
+  // A partial may declare its own @state; those are defaults — the inherited
+  // parent context (and any @include overrides) win on name collision, matching
+  // @include's documented context-inheritance behaviour. The partial's state
+  // is not re-serialised here: the SSR payload is emitted once, for the
+  // top-level document, by the compiler entry point.
   const childSeen = new Set(seen);
   childSeen.add(absolutePath);
 
-  const ast = buildAst(src);
+  const { ast, state: partialState } = buildAstWithState(src);
+  const partialContext = { ...partialState, ...parentContext, ...overrides };
   return generateHtml(ast, indentLevel, partialContext, {
     ...opts,
     basePath: absolutePath,
