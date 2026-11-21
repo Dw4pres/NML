@@ -39,6 +39,15 @@ export interface ASTNode {
 export type ComponentMap = Record<string, ASTNode[]>;
 export type GlobalStyles = Record<string, string>;
 
+/** File-level @state declarations: name → initial value (JSON-serializable). */
+export type StateMap = Record<string, unknown>;
+
+/** Result of buildAstWithState: the final AST plus the file's @state declarations. */
+export interface BuildAstResult {
+  ast: ASTNode[];
+  state: StateMap;
+}
+
 export class NMLParserError extends Error {
   loc: SourceLocation;
   constructor(message: string, loc: SourceLocation = { line: 0, column: 0 }) {
@@ -101,6 +110,11 @@ export function parseLine(rawContent: string, loc: SourceLocation): ASTNode {
   let rest = "";
 
   if (line.startsWith("@")) {
+    // @state declarations — parse from the full line (values may contain spaces)
+    if (line === "@state" || line.startsWith("@state.") || line.startsWith("@state(")) {
+      return parseStateDirective(line, loc);
+    }
+
     // Could be @define.Name, @slot, @slot.name, @style:, @ComponentName...
     const spaceIdx = line.indexOf(" ");
     const candidate = spaceIdx === -1 ? line : line.slice(0, spaceIdx);
@@ -406,6 +420,23 @@ export function buildAst(
     globalStyles?: GlobalStyles;
   } = {}
 ): ASTNode[] {
+  return buildAstWithState(source, options).ast;
+}
+
+/**
+ * Build the AST and collect the file's @state declarations.
+ *
+ * Pipeline: line parse → state declarations pass (validate + strip @state
+ * nodes) → component expansion → conditionals post-process → state actions
+ * pass (translate on:* handlers that reference declared state).
+ */
+export function buildAstWithState(
+  source: string,
+  options: {
+    components?: ComponentMap;
+    globalStyles?: GlobalStyles;
+  } = {}
+): BuildAstResult {
   const components = options.components ?? {};
   const globalStyles = options.globalStyles ?? {};
 
@@ -524,10 +555,15 @@ export function buildAst(
     stack.push([newNode, level]);
   }
 
+  // State declarations pass: collect + validate @state, strip declaration nodes
+  const state = collectStateDeclarations(root.children);
   // Component expansion pass
   root.children = expandComponentsPass(root.children, components, globalStyles);
   // Conditionals post-process pass: group @if/@else/@endif siblings
-  return postProcessConditionalsPass(root.children);
+  const ast = postProcessConditionalsPass(root.children);
+  // State actions pass: translate on:* handlers that reference declared state
+  translateStateActions(ast, state);
+  return { ast, state };
 }
 
 // ---------------------------------------------------------------------------
@@ -900,6 +936,455 @@ function makeNode(
     multiline_content: [],
     loc,
   };
+}
+
+/**
+ * Parse a @state declaration line: `@state.<name>(<JSON value>)`.
+ * The value is stored raw in attributes.value and validated (JSON.parse)
+ * by collectStateDeclarations, which has the full file context for
+ * duplicate and ordering checks.
+ */
+function parseStateDirective(line: string, loc: SourceLocation): ASTNode {
+  if (line === "@state" || !line.startsWith("@state.")) {
+    throw new NMLParserError(
+      `@state requires a name and a JSON value — use @state.<name>(<value>), e.g. @state.count(0). Supported values: number, string, boolean, null, array, object.`,
+      loc
+    );
+  }
+
+  const afterPrefix = line.slice("@state.".length);
+  const openIdx = afterPrefix.indexOf("(");
+  if (openIdx === -1) {
+    throw new NMLParserError(
+      `@state.${afterPrefix} requires a JSON value in parentheses, e.g. @state.${afterPrefix}(0). Supported values: number, string, boolean, null, array, object.`,
+      loc
+    );
+  }
+
+  const name = afterPrefix.slice(0, openIdx);
+  if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name)) {
+    throw new NMLParserError(
+      `@state name "${name}" is not a valid identifier — use letters, digits, _ or $ (e.g. @state.count(0)).`,
+      loc
+    );
+  }
+
+  if (!line.trimEnd().endsWith(")")) {
+    throw new NMLParserError(
+      `@state.${name} has trailing content after the value. Use @state.${name}(<value>) with nothing after the closing parenthesis.`,
+      loc
+    );
+  }
+
+  const rawValue = line.slice(line.indexOf("(") + 1, line.lastIndexOf(")")).trim();
+  return makeNode("@state", { name, value: rawValue }, "", [], loc);
+}
+
+// ---------------------------------------------------------------------------
+// @state declarations pass
+// ---------------------------------------------------------------------------
+
+interface StateDeclaration {
+  name: string;
+  value: unknown;
+  loc: SourceLocation;
+}
+
+/**
+ * Collect + validate top-level @state declarations and strip them from the tree.
+ *
+ * Rules enforced here (all errors are NMLParserError with line:column + fix hint):
+ *  - Values must be valid JSON (number, string, boolean, null, array, object).
+ *  - No duplicate declarations of the same name.
+ *  - Declarations must be top-level children of the file — never nested inside
+ *    an element, and never inside an @define block (component-local state is
+ *    not supported in v1).
+ *  - A declaration must appear before its first use: any reference to a declared
+ *    state name (in {{ }}, @if/@each, or on:* handlers) on an earlier line
+ *    than the declaration is an error. References inside @define template
+ *    bodies are exempt — templates are definitions, not ordered uses.
+ */
+function collectStateDeclarations(nodes: ASTNode[]): StateMap {
+  const state: StateMap = {};
+  const declarations = new Map<string, StateDeclaration>();
+
+  // Phase A — validate top-level declarations, in file order.
+  for (const node of nodes) {
+    if (node.element !== "@state") continue;
+    const name = node.attributes["name"] as string;
+    const rawValue = node.attributes["value"] as string;
+
+    let value: unknown;
+    try {
+      value = JSON.parse(rawValue);
+    } catch {
+      throw new NMLParserError(
+        `@state.${name}: invalid JSON value "${rawValue}". @state values must be valid JSON — a number, string, boolean, null, array, or object (e.g. @state.count(0), @state.label("hi")).`,
+        node.loc
+      );
+    }
+
+    const first = declarations.get(name);
+    if (first) {
+      throw new NMLParserError(
+        `@state.${name} is declared twice (first declared on line ${first.loc.line}). Rename one declaration or remove the duplicate.`,
+        node.loc
+      );
+    }
+
+    declarations.set(name, { name, value, loc: node.loc });
+    state[name] = value;
+  }
+
+  // Phase B — walk the tree in document order: nesting + declared-after-use.
+  const declaredNames = new Set(declarations.keys());
+  const checkReferences = (node: ASTNode): void => {
+    if (node.element === "@state") return; // declaration value is JSON, not a template
+    const refs = findStateReferences(node, declaredNames);
+    for (const name of refs) {
+      const decl = declarations.get(name);
+      if (decl && decl.loc.line > node.loc.line) {
+        throw new NMLParserError(
+          `@state.${name} is used on line ${node.loc.line} but declared on line ${decl.loc.line}. Move the @state.${name} declaration above its first use.`,
+          node.loc
+        );
+      }
+    }
+  };
+
+  const walk = (items: ASTNode[], parentElement: string | null, insideDefine: boolean): void => {
+    for (const node of items) {
+      if (node.element === "@state") {
+        if (parentElement !== null) {
+          if (insideDefine || parentElement === "@define") {
+            throw new NMLParserError(
+              `@state.${node.attributes["name"]} cannot be declared inside @define — component-local state is not supported in v1. Declare @state at the top of the file instead.`,
+              node.loc
+            );
+          }
+          throw new NMLParserError(
+            `@state.${node.attributes["name"]} must be declared at the top level of the file, not inside <${parentElement}>. Move the declaration to the top level of the file.`,
+            node.loc
+          );
+        }
+        continue;
+      }
+
+      if (!insideDefine) checkReferences(node);
+
+      const childInsideDefine = insideDefine || node.element === "@define";
+      if (node.children.length > 0) {
+        walk(node.children, node.element, childInsideDefine);
+      }
+    }
+  };
+  walk(nodes, null, false);
+
+  // Phase C — strip declaration nodes (they produce no HTML).
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    if (nodes[i].element === "@state") nodes.splice(i, 1);
+  }
+
+  return state;
+}
+
+/**
+ * Find references to declared state names in one node: {{ }} interpolations
+ * in content and attribute values, @if/@elseif conditions, @each item paths,
+ * and identifiers in on:* handler expressions.
+ */
+function findStateReferences(node: ASTNode, declaredNames: Set<string>): Set<string> {
+  const refs = new Set<string>();
+
+  const scanText = (text: string): void => {
+    for (const root of extractInterpolationRoots(text)) {
+      if (declaredNames.has(root)) refs.add(root);
+    }
+  };
+
+  scanText(node.content);
+  for (const [key, value] of Object.entries(node.attributes)) {
+    if (typeof value === "string") {
+      scanText(value);
+      // on:* handlers may also reference state as bare identifiers
+      if (key.startsWith("on")) {
+        for (const id of scanExpressionIdentifiers(value)) {
+          if (declaredNames.has(id)) refs.add(id);
+        }
+      }
+    } else if (Array.isArray(value)) {
+      for (const part of value) scanText(part);
+    }
+  }
+
+  if (node.element === "@if" || node.element === "@elseif") {
+    const root = String(node.attributes["condition"] ?? "").split(".")[0];
+    if (declaredNames.has(root)) refs.add(root);
+  }
+  if (node.element === "@each") {
+    const root = String(node.attributes["items"] ?? "").split(".")[0];
+    if (declaredNames.has(root)) refs.add(root);
+  }
+
+  return refs;
+}
+
+function extractInterpolationRoots(text: string): string[] {
+  const roots: string[] = [];
+  const re = /\{\{\s*([\w.]+?)(?:\|[^}]*)?\s*\}\}/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    roots.push(m[1].split(".")[0]);
+  }
+  return roots;
+}
+
+/**
+ * Scan an action expression for bare identifiers, skipping string literals
+ * (single/double quoted) and {{ }} interpolations — those are not state
+ * references. Used to detect whether a handler touches declared state.
+ */
+function scanExpressionIdentifiers(expr: string): string[] {
+  const ids: string[] = [];
+  let i = 0;
+  while (i < expr.length) {
+    const ch = expr[i];
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      i++;
+      while (i < expr.length && expr[i] !== quote) {
+        if (expr[i] === "\\") i++;
+        i++;
+      }
+      i++;
+      continue;
+    }
+    if (ch === "{" && expr[i + 1] === "{") {
+      const close = expr.indexOf("}}", i + 2);
+      i = close === -1 ? expr.length : close + 2;
+      continue;
+    }
+    if (/[A-Za-z_$]/.test(ch)) {
+      let j = i + 1;
+      while (j < expr.length && /[\w$]/.test(expr[j])) j++;
+      ids.push(expr.slice(i, j));
+      i = j;
+      continue;
+    }
+    i++;
+  }
+  return ids;
+}
+
+// ---------------------------------------------------------------------------
+// @state actions pass
+// ---------------------------------------------------------------------------
+
+const SUPPORTED_ACTION_FORMS =
+  "name++, name--, name = <literal>, name = !name, name = <arithmetic using state names and numbers>";
+
+/**
+ * Translate on:* handlers that reference declared state into data-nml-action
+ * attributes (the contract the future client runtime consumes) and validate
+ * the action expression. Runs after component expansion so call-site handlers
+ * merged onto component roots are translated too.
+ *
+ *  - Handler referencing a declared state name in a supported form →
+ *    `data-nml-action="<expr>"`, inline on* attribute removed.
+ *  - Handler referencing a declared state name in an unsupported form →
+ *    NMLParserError naming the form and listing supported forms.
+ *  - Handler assigning/incrementing a name that is NOT declared →
+ *    NMLParserError with a "did you mean to declare @state.<name>?" hint.
+ *  - Handlers that do not reference declared state pass through unchanged.
+ */
+function translateStateActions(nodes: ASTNode[], state: StateMap): void {
+  const stateNames = new Set(Object.keys(state));
+
+  const walk = (items: ASTNode[]): void => {
+    for (const node of items) {
+      for (const key of Object.keys(node.attributes)) {
+        if (!key.startsWith("on")) continue;
+        const value = node.attributes[key];
+        if (typeof value !== "string") continue;
+
+        const action = classifyStateAction(value, stateNames, node.loc);
+        if (action === null) continue;
+
+        if (typeof node.attributes["data-nml-action"] === "string") {
+          throw new NMLParserError(
+            `Only one state action per element is supported in v1 — "${action}" conflicts with "${node.attributes["data-nml-action"]}" on this element. Split the actions across elements.`,
+            node.loc
+          );
+        }
+        delete node.attributes[key];
+        node.attributes["data-nml-action"] = action;
+      }
+
+      if (node.children.length > 0) walk(node.children);
+      if (node.elseBranch && node.elseBranch.length > 0) walk(node.elseBranch);
+      if (node.elseifBranch && node.elseifBranch.length > 0) {
+        for (const branch of node.elseifBranch) walk([branch]);
+      }
+    }
+  };
+  walk(nodes);
+}
+
+/**
+ * Classify one on:* handler value.
+ * Returns the action expression (trimmed) if it is a supported state action,
+ * null if it does not touch declared state (pass through unchanged),
+ * or throws NMLParserError for unsupported/undeclared forms.
+ */
+function classifyStateAction(
+  expr: string,
+  stateNames: Set<string>,
+  loc: SourceLocation
+): string | null {
+  const trimmed = expr.trim();
+
+  // Increment / decrement: `name++` or `name--`
+  const incMatch = trimmed.match(/^([A-Za-z_$][\w$]*)\s*(\+\+|--)$/);
+  if (incMatch) {
+    const target = incMatch[1];
+    if (!stateNames.has(target)) {
+      throw new NMLParserError(
+        `on handler assigns to "${target}", but @state.${target} is not declared. Did you mean to declare @state.${target}(<initial value>) at the top of the file?`,
+        loc
+      );
+    }
+    return trimmed;
+  }
+
+  // Assignment: `name = <rhs>`
+  const assignMatch = trimmed.match(/^([A-Za-z_$][\w$]*)\s*=\s*(.+)$/);
+  if (assignMatch) {
+    const target = assignMatch[1];
+    const rhs = assignMatch[2].trim();
+    if (!stateNames.has(target)) {
+      throw new NMLParserError(
+        `on handler assigns to "${target}", but @state.${target} is not declared. Did you mean to declare @state.${target}(<initial value>) at the top of the file?`,
+        loc
+      );
+    }
+    if (!isSupportedActionRhs(rhs, stateNames)) {
+      throw new NMLParserError(
+        `Unsupported state action "${trimmed}" for @state.${target}. Supported forms: ${SUPPORTED_ACTION_FORMS}.`,
+        loc
+      );
+    }
+    return trimmed;
+  }
+
+  // No assignment target: any reference to declared state is an error —
+  // the handler would silently do nothing stateful at runtime.
+  const referenced = scanExpressionIdentifiers(trimmed).find((id) => stateNames.has(id));
+  if (referenced !== undefined) {
+    throw new NMLParserError(
+      `Unsupported state action "${trimmed}" — it references @state.${referenced} but is not a supported form. Supported forms: ${SUPPORTED_ACTION_FORMS}.`,
+      loc
+    );
+  }
+
+  return null;
+}
+
+/** Validate the right-hand side of a state assignment. */
+function isSupportedActionRhs(rhs: string, stateNames: Set<string>): boolean {
+  // Negation: `!name` (name must be declared state)
+  const negMatch = rhs.match(/^!\s*([A-Za-z_$][\w$]*)$/);
+  if (negMatch) return stateNames.has(negMatch[1]);
+
+  // JSON literal: number, string, boolean, null, array, object
+  try {
+    JSON.parse(rhs);
+    return true;
+  } catch {
+    // Not a JSON literal — fall through
+  }
+
+  // Single-quoted string literal: NML attribute values are double-quoted, so
+  // a string literal inside an action can only be written single-quoted
+  // (e.g. on:click("label = 'hi'")). The runtime contract treats it as a
+  // string literal.
+  if (/^'((?:[^'\\]|\\.)*)'$/.test(rhs)) return true;
+
+  // Arithmetic over declared state names and numeric literals
+  return isValidArithmetic(rhs, stateNames);
+}
+
+/** Tiny recursive-descent check: numbers, declared state names, + - * / % ( ) and unary minus. */
+function isValidArithmetic(rhs: string, stateNames: Set<string>): boolean {
+  const tokens: Array<{ kind: "num" | "id" | "op" | "lparen" | "rparen"; value: string }> = [];
+  let i = 0;
+  while (i < rhs.length) {
+    const ch = rhs[i];
+    if (/\s/.test(ch)) { i++; continue; }
+    if (/\d/.test(ch)) {
+      let j = i + 1;
+      while (j < rhs.length && /[\d.]/.test(rhs[j])) j++;
+      const num = rhs.slice(i, j);
+      if (!/^\d+(\.\d+)?$/.test(num)) return false;
+      tokens.push({ kind: "num", value: num });
+      i = j;
+      continue;
+    }
+    if (/[A-Za-z_$]/.test(ch)) {
+      let j = i + 1;
+      while (j < rhs.length && /[\w$]/.test(rhs[j])) j++;
+      tokens.push({ kind: "id", value: rhs.slice(i, j) });
+      i = j;
+      continue;
+    }
+    if ("+-*/%".includes(ch)) { tokens.push({ kind: "op", value: ch }); i++; continue; }
+    if (ch === "(") { tokens.push({ kind: "lparen", value: ch }); i++; continue; }
+    if (ch === ")") { tokens.push({ kind: "rparen", value: ch }); i++; continue; }
+    return false;
+  }
+  if (tokens.length === 0) return false;
+
+  let pos = 0;
+  const peek = (): (typeof tokens)[number] | undefined => tokens[pos];
+  const parseExpr = (): boolean => {
+    if (!parseTerm()) return false;
+    while (peek()?.kind === "op" && (peek()?.value === "+" || peek()?.value === "-")) {
+      pos++;
+      if (!parseTerm()) return false;
+    }
+    return true;
+  };
+  const parseTerm = (): boolean => {
+    if (!parseFactor()) return false;
+    while (peek()?.kind === "op" && (peek()?.value === "*" || peek()?.value === "/" || peek()?.value === "%")) {
+      pos++;
+      if (!parseFactor()) return false;
+    }
+    return true;
+  };
+  const parseFactor = (): boolean => {
+    const tok = peek();
+    if (!tok) return false;
+    if (tok.kind === "num") { pos++; return true; }
+    if (tok.kind === "id") {
+      if (!stateNames.has(tok.value)) return false;
+      pos++;
+      return true;
+    }
+    if (tok.kind === "op" && tok.value === "-") {
+      pos++;
+      return parseFactor();
+    }
+    if (tok.kind === "lparen") {
+      pos++;
+      if (!parseExpr()) return false;
+      if (peek()?.kind !== "rparen") return false;
+      pos++;
+      return true;
+    }
+    return false;
+  };
+
+  return parseExpr() && pos === tokens.length;
 }
 
 // ---------------------------------------------------------------------------

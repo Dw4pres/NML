@@ -25,6 +25,13 @@ export interface ASTNode {
 }
 export type ComponentMap = Record<string, ASTNode[]>;
 export type GlobalStyles = Record<string, string>;
+/** File-level @state declarations: name → initial value (JSON-serializable). */
+export type StateMap = Record<string, unknown>;
+/** Result of buildAstWithState: the final AST plus the file's @state declarations. */
+export interface BuildAstResult {
+    ast: ASTNode[];
+    state: StateMap;
+}
 export declare class NMLParserError extends Error {
     loc: SourceLocation;
     constructor(message: string, loc?: SourceLocation);
@@ -41,6 +48,17 @@ export declare function buildAst(source: string, options?: {
     components?: ComponentMap;
     globalStyles?: GlobalStyles;
 }): ASTNode[];
+/**
+ * Build the AST and collect the file's @state declarations.
+ *
+ * Pipeline: line parse → state declarations pass (validate + strip @state
+ * nodes) → component expansion → conditionals post-process → state actions
+ * pass (translate on:* handlers that reference declared state).
+ */
+export declare function buildAstWithState(source: string, options?: {
+    components?: ComponentMap;
+    globalStyles?: GlobalStyles;
+}): BuildAstResult;
 export declare function findComponentRootNode(ast: ASTNode[]): ASTNode | null;
 export declare function isTruthy(val: unknown): boolean;
 export declare function renderVariables(template: string, context: Record<string, unknown>): string;

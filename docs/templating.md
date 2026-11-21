@@ -36,6 +36,98 @@ div | {{ body|raw }}
 
 ---
 
+## 🗄️ State — `@state` (v1)
+
+File-level client state for stateful apps. Stateless files are unaffected — if a file declares no `@state`, it renders exactly as before, with zero client JavaScript.
+
+> **Design rule:** state is *declared and visible*. NML is written by AI agents and read/audited by humans: every piece of state is declared at the top of the file, and every mutation is visible at the event site. There is no invisible or globally shared state.
+
+### Declaring State
+
+```nml
+@state.count(0)
+@state.label("hello")
+@state.open(false)
+@state.tags(["a", "b"])
+@state.user({"name": "Al"})
+```
+
+- **Values must be valid JSON** — number, string, boolean, null, array, or object.
+- **Top level only** — declarations must be direct children of the file, before their first use. A declaration after its first use is a parse error.
+- **No duplicates** — declaring the same name twice is a parse error.
+- **No component-local state in v1** — `@state` inside `@define` is a parse error; declare it at the top of the file instead.
+
+### Using State
+
+Declared state seeds the render context, so `{{ }}`, `@if`, and `@each` work with state values exactly like context variables:
+
+```nml
+@state.count(0)
+@state.items(["a", "b"])
+
+p | Count: {{ count }}
+@if(count)
+    p | Counting!
+@endif
+ul
+    @each(items as item)
+        li | {{ item }}
+    @endeach
+```
+
+**Precedence:** explicit context passed to `render()` wins over a `@state` initial value on name collision. `@state` values are defaults, not overrides.
+
+### SSR Payload
+
+When a file declares `@state`, the rendered HTML includes the effective initial state as a machine-readable payload for the future client runtime:
+
+```html
+<script type="application/json" data-nml-state>{"count":0}</script>
+```
+
+- Placed immediately before `</body>` when present, otherwise appended at the end of the output.
+- The payload reflects context overrides (effective initial state, not just declared defaults).
+- `<` is escaped (`\u003c`) so a state string value can never break out of the `<script>` block.
+
+### State Actions
+
+`on:*` handlers that reference declared state are translated into a `data-nml-action` attribute — the contract the future client runtime consumes — and the inline `on*` attribute is removed:
+
+```nml
+@state.count(0)
+button.on:click("count++") | Increment
+```
+
+```html
+<button data-nml-action="count++">Increment</button>
+```
+
+**Supported forms (v1):**
+
+| Form | Example |
+|---|---|
+| Increment / decrement | `count++`, `count--` |
+| Assign a literal | `count = 5`, `label = 'hi'` |
+| Negate a boolean | `open = !open` |
+| Arithmetic | `count = count + 1`, `count = (total % 3) * 2` |
+
+- String literals inside actions use **single quotes** (`label = 'hi'`) because the attribute value itself is double-quoted. Other literals are JSON.
+- Arithmetic accepts declared state names, numeric literals, `+ - * / %`, parentheses, and unary minus.
+- Handlers that do **not** reference declared state pass through unchanged (`button.on:click("handleClick()")` still renders `onclick="handleClick()"`).
+- Alpine handlers (`x-on:click`) are untouched.
+- Only **one** state action per element is supported in v1.
+- Referencing declared state in an unsupported form, or assigning to a name that isn't declared, is a parse error with a fix hint (e.g. `Did you mean to declare @state.count(<initial value>)?`).
+
+> ⚠️ **The runtime is a future PR.** `data-nml-action` attributes are inert until the client runtime lands — today, use HTMX or Alpine for live interactivity.
+
+### Known v1 Limits
+
+- `@if` conditions are still context paths + truthiness — no comparison expressions (`count > 5` is not supported).
+- State is file-level only — no per-instance component state, no shared/global store.
+- A partial's own `@state` provides defaults that inherited parent context can override; its state is not re-serialised — the SSR payload is emitted once, for the top-level document.
+
+---
+
 ## 🔁 Loops — `@each`
 
 Iterate over an array in the context.

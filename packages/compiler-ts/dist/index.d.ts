@@ -6,7 +6,7 @@
  * never a concrete class. A future @nml/compiler-wasm package will export
  * a WasmCompiler satisfying the same interface.
  */
-import { buildAst, renderVariables, NMLParserError, findComponentRootNode, parseLineRaw, isTruthy, postProcessConditionalsPass } from "./parser.js";
+import { buildAst, buildAstWithState, renderVariables, NMLParserError, findComponentRootNode, parseLineRaw, isTruthy, postProcessConditionalsPass, type StateMap, type BuildAstResult } from "./parser.js";
 import { generateHtml, type RenderOptions } from "./renderer.js";
 import type { ASTNode, ComponentMap, GlobalStyles } from "./parser.js";
 export interface CompilerAdapter {
@@ -30,9 +30,9 @@ export interface CompileOptions {
     basePath?: string;
 }
 export declare const nmlCompiler: CompilerAdapter;
-export { buildAst, generateHtml, renderVariables, NMLParserError, findComponentRootNode, parseLineRaw, isTruthy, postProcessConditionalsPass };
+export { buildAst, buildAstWithState, generateHtml, renderVariables, NMLParserError, findComponentRootNode, parseLineRaw, isTruthy, postProcessConditionalsPass };
 export type { RenderOptions };
-export type { ASTNode, ComponentMap, GlobalStyles };
+export type { ASTNode, ComponentMap, GlobalStyles, StateMap, BuildAstResult };
 export { NMLLexerError } from "./lexer.js";
 export type { SourceLocation, Token, TokenKind } from "./lexer.js";
 //# sourceMappingURL=index.d.ts.map
