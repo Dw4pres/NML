@@ -1218,6 +1218,11 @@ function translateStateActions(nodes: ASTNode[], state: StateMap): void {
         }
         delete node.attributes[key];
         node.attributes["data-nml-action"] = action;
+        // The event the action fires on, from the on:* handler name
+        // (onclick → click). The runtime matches on this; the attribute key
+        // itself ("on" + event) is the source of truth.
+        const eventName = key.slice(2);
+        if (eventName) node.attributes["data-nml-event"] = eventName;
       }
 
       if (node.children.length > 0) walk(node.children);

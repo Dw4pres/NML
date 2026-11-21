@@ -365,3 +365,128 @@ describe("vite-plugin-nml generateBundle", () => {
     expect(emitted).toHaveLength(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// transform hook — @state (stateful files)
+// ---------------------------------------------------------------------------
+
+describe("vite-plugin-nml transform — @state", () => {
+  it("emits byte-identical output for stateless files (regression)", async () => {
+    const plugin = nmlPlugin();
+    const result = await callTransform(
+      plugin as Plugin,
+      'div\n    p("Hello")',
+      "/views/index.nml"
+    );
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe(STATELESS_GOLDEN);
+  });
+
+  it("stateful full page emits mount import, auto-mount, and state seeding", async () => {
+    const plugin = nmlPlugin();
+    const nml = [
+      "@state.count(0)",
+      "doctype.html",
+      "html",
+      "    head",
+      "        title | Counter",
+      "    body",
+      "        p | Count: {{ count }}",
+      '        button.on:click("count++") | Increment',
+    ].join("\n");
+    const result = await callTransform(plugin as Plugin, nml, "/views/index.nml");
+    expect(result).not.toBeNull();
+    const code = result!.code;
+    expect(code).toContain('import { mountNmlState } from "@nml-lang/state";');
+    expect(code).toContain('document.querySelector("script[data-nml-state]")');
+    expect(code).toContain("mountNmlState({ render: render, initial: _initial })");
+    expect(code).toContain("const _initialState = {\"count\":0};");
+    expect(code).toContain("_withStatePayload");
+    // Full-page heuristic: the auto-mount runs only in the browser.
+    expect(code).toContain('typeof document !== "undefined"');
+  });
+
+  it("emitted payload escape survives codegen (double backslash)", async () => {
+    // The emitted module is parsed as JS, so its replacement string must
+    // contain a DOUBLED backslash ("\\u003c" in the emitted text), which
+    // parses to the 6-char escape. A single backslash would emit "\u003c",
+    // which parses to "<" and silently disables the escape on every
+    // client-side re-render — a state value like "a</script>b" would then
+    // break out of the payload script block.
+    const plugin = nmlPlugin();
+    const nml = [
+      "@state.count(0)",
+      "doctype.html",
+      "html",
+      "    body",
+      "        p | {{ count }}",
+    ].join("\n");
+    const result = await callTransform(plugin as Plugin, nml, "/views/index.nml");
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain(String.raw`.replace(/</g, "\\u003c")`);
+  });
+
+  it("stateful fragment gets state seeding but no auto-mount", async () => {
+    const plugin = nmlPlugin();
+    const nml = [
+      "@state.count(0)",
+      "div",
+      "    p | Count: {{ count }}",
+      '    button.on:click("count++") | Increment',
+    ].join("\n");
+    const result = await callTransform(plugin as Plugin, nml, "/views/counter.nml");
+    expect(result).not.toBeNull();
+    const code = result!.code;
+    expect(code).toContain("const _initialState = {\"count\":0};");
+    expect(code).toContain("_withStatePayload");
+    expect(code).not.toContain("@nml-lang/state");
+    expect(code).not.toContain("mountNmlState");
+    expect(code).not.toContain('document.querySelector("script[data-nml-state]")');
+  });
+
+  it("stateful file with top-level html but no doctype still auto-mounts", async () => {
+    const plugin = nmlPlugin();
+    const nml = [
+      "@state.count(0)",
+      "html",
+      "    body",
+      "        p | {{ count }}",
+    ].join("\n");
+    const result = await callTransform(plugin as Plugin, nml, "/views/index.nml");
+    expect(result!.code).toContain('import { mountNmlState } from "@nml-lang/state";');
+  });
+});
+
+// Golden output of nmlToEsm for a stateless file, captured from the
+// pre-@state implementation. Any change to the stateless template must
+// update this deliberately — it guards the zero-cost default.
+const STATELESS_GOLDEN = String.raw`import { buildAst, generateHtml } from "@nml-lang/compiler-ts";
+
+const _source = "div\n    p(\"Hello\")";
+const _globalContext = {};
+const _hmrKey = "/views/index.nml";
+
+export async function render(context = {}) {
+  const ast = buildAst(_source);
+  return generateHtml(ast, 0, { ..._globalContext, ...context });
+}
+
+export const html = await render();
+export default render;
+
+if (import.meta.hot) {
+  import.meta.hot.on("nml:update", async (data) => {
+    if (data.id !== _hmrKey) return;
+    const newHtml = data.html;
+    document.querySelectorAll("[data-nml-src]").forEach((el) => {
+      if (el.getAttribute("data-nml-src") === _hmrKey) {
+        el.innerHTML = newHtml;
+      }
+    });
+    if (!document.querySelector("[data-nml-src]")) {
+      import.meta.hot.invalidate();
+    }
+  });
+  import.meta.hot.accept();
+}
+`;

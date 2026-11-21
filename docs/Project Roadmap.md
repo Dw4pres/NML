@@ -279,7 +279,7 @@ Our goal: a component-based web framework that abstracts away repetitive HTML/CS
 
 ### Phase 17 — Client State (v1) ✅
 
-*Compiler-only. Establishes the contract the future client runtime consumes; no runtime in this phase.*
+*Compiler (17A–17C) establishes the contract the client runtime consumes; 17D is the runtime itself.*
 
 **17A — `@state` Declarations** ✅
 - [x] `@state.<name>(<JSON value>)` at the top level of a file (number, string, boolean, null, array, object)
@@ -301,7 +301,19 @@ Our goal: a component-based web framework that abstracts away repetitive HTML/CS
 - [x] Unsupported form → NMLParserError naming the form and listing supported forms
 - [x] Assignment to an undeclared name → NMLParserError with "did you mean to declare @state.<name>?" hint
 - [x] Handlers not referencing state pass through unchanged; Alpine `x-on:*` untouched
-- [x] **Total: 222 tests in compiler-ts** (183 existing + 39 new in `state.test.ts`)
+- [x] **Total: 223 tests in compiler-ts** (183 existing + 40 new in `state.test.ts`)
+
+**17D — Client Runtime (`@nml-lang/state`)** ✅
+- [x] New package `@nml-lang/state` v2.2.0, no runtime dependencies, built `dist/index.js` 7,904 bytes (≤ 8KB budget)
+- [x] `mountNmlState({ render, initial, root? })` → `{ getState(), setState(patch), destroy() }`; document-level click/change/submit delegation, `data-nml-event` (default `"click"`), `preventDefault()` on handled actions
+- [x] Pure `applyAction(state, action)` returning a new state object; supported forms `name++`, `name--`, `name = <literal>`, `name = !name`, `name = <arithmetic>`; anything else throws `NmlStateError` with action + code + reason
+- [x] DOMParser patch (full page → replace `document.body` children, keeping `<head>`; fragment → `root.innerHTML`); focus restore by id (inputs without id lose focus — known v1 limit, DOM morphing is the follow-up)
+- [x] No `$value` / input-value binding; `input` events not wired (v1 limits, documented in `docs/templating.md`)
+- [x] Compiler emits `data-nml-event` from `on:*` handlers (additive; all existing compiler-ts tests still pass)
+- [x] Vite-plugin: `@state` detected via `buildAstWithState` (no naive string search); full pages get the mount import + browser-only auto-mount block reading the SSR payload; fragments get no auto-mount (manual mount documented); stateless files emit byte-identical modules (regression test)
+- [x] HMR resets state to initial values (documented v1 limit); re-mount destroys the previous mount so listeners never double-fire
+- [x] Example `examples/state-counter/` (full-page counter + todo add/toggle); `bun install` + `bun run build` succeed
+- [x] **Total: 34 tests in state package** (evaluator + happy-dom mount), **24 tests in vite-plugin** (incl. byte-identical stateless regression)
 
 ---
 

@@ -35,7 +35,8 @@
     "vite": ">=4.0.0"
   },
   "dependencies": {
-    "@nml-lang/compiler-ts": "^2.2.3"
+    "@nml-lang/compiler-ts": "^2.2.3",
+    "@nml-lang/state": "^2.2.0"
   },
   "devDependencies": {
     "vite": "^5.0.0",

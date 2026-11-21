@@ -279,7 +279,24 @@ describe("@state — actions", () => {
   it("translates actions via buildAst alone (lint path)", () => {
     const ast = buildAst('@state.count(0)\nbutton.on:click("count++")');
     expect(ast[0].attributes["data-nml-action"]).toBe("count++");
+    expect(ast[0].attributes["data-nml-event"]).toBe("click");
     expect(ast[0].attributes["onclick"]).toBeUndefined();
+  });
+
+  it("emits data-nml-event for click, change, and submit handlers", async () => {
+    const src = "@state.count(0)\n@state.done(false)";
+    const click = await nmlCompiler.render(
+      `${src}\nbutton.on:click("count++") | Inc`
+    );
+    expect(click).toContain('data-nml-event="click"');
+    const change = await nmlCompiler.render(
+      `${src}\ninput.type("checkbox").on:change("done = !done")`
+    );
+    expect(change).toContain('data-nml-event="change"');
+    const submit = await nmlCompiler.render(
+      `${src}\nform.on:submit("count = 0")`
+    );
+    expect(submit).toContain('data-nml-event="submit"');
   });
 
   it("passes non-state handlers through unchanged", async () => {
