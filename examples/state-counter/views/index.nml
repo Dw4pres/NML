@@ -1,0 +1,74 @@
+@state.count(0)
+@state.todo0("Learn NML")
+@state.todo1("Build a counter")
+@state.todo2("Ship it")
+@state.todo3("Write the docs")
+@state.done0(false)
+@state.done1(false)
+@state.done2(false)
+@state.done3(false)
+@state.show3(false)
+doctype.html
+html
+    head
+        title | State Counter - NML
+        script.src("/client.js").type("module")
+        style |
+            body { font-family: system-ui; margin: 2rem; background: #f8fafc; }
+            .container { max-width: 600px; margin: 0 auto; }
+            .todo-item { display: flex; align-items: center; padding: 0.75rem; background: white; margin: 0.5rem 0; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+            .todo-item input { margin-right: 1rem; }
+            .todo-item:has(input:checked) { opacity: 0.6; }
+            .todo-item:has(input:checked) span { text-decoration: line-through; }
+            button { padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 0.5rem; }
+            button:hover { background: #2563eb; }
+            h1 { color: #1e293b; }
+            .count { font-size: 2rem; font-weight: bold; }
+
+    body
+        .container
+            h1 | State Counter
+            p | A full page with @state — no page reloads, no client framework.
+
+            h2 | Counter
+            p.count | Count: {{ count }}
+            button.on:click("count++") | +1
+            button.on:click("count--") | -1
+            button.on:click("count = count + 10") | +10
+            button.on:click("count = 0") | Reset
+
+            h2 | Todos
+            p | Check items off. Add reveals a fourth preset item (v1 has no input binding).
+
+            div.class("todo-item")
+                @if(done0)
+                    input.type("checkbox").checked.on:change("done0 = !done0")
+                @else
+                    input.type("checkbox").on:change("done0 = !done0")
+                @endif
+                span | {{ todo0 }}
+            div.class("todo-item")
+                @if(done1)
+                    input.type("checkbox").checked.on:change("done1 = !done1")
+                @else
+                    input.type("checkbox").on:change("done1 = !done1")
+                @endif
+                span | {{ todo1 }}
+            div.class("todo-item")
+                @if(done2)
+                    input.type("checkbox").checked.on:change("done2 = !done2")
+                @else
+                    input.type("checkbox").on:change("done2 = !done2")
+                @endif
+                span | {{ todo2 }}
+            @if(show3)
+                div.class("todo-item")
+                    @if(done3)
+                        input.type("checkbox").checked.on:change("done3 = !done3")
+                    @else
+                        input.type("checkbox").on:change("done3 = !done3")
+                    @endif
+                    span | {{ todo3 }}
+            @endif
+
+            button.on:click("show3 = true") | Add "Write the docs"

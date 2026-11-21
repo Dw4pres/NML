@@ -79,7 +79,7 @@ ul
 
 ### SSR Payload
 
-When a file declares `@state`, the rendered HTML includes the effective initial state as a machine-readable payload for the future client runtime:
+When a file declares `@state`, the rendered HTML includes the effective initial state as a machine-readable payload for the client runtime:
 
 ```html
 <script type="application/json" data-nml-state>{"count":0}</script>
@@ -91,7 +91,7 @@ When a file declares `@state`, the rendered HTML includes the effective initial 
 
 ### State Actions
 
-`on:*` handlers that reference declared state are translated into a `data-nml-action` attribute — the contract the future client runtime consumes — and the inline `on*` attribute is removed:
+`on:*` handlers that reference declared state are translated into `data-nml-action` and `data-nml-event` attributes — the contract the client runtime consumes — and the inline `on*` attribute is removed:
 
 ```nml
 @state.count(0)
@@ -99,7 +99,7 @@ button.on:click("count++") | Increment
 ```
 
 ```html
-<button data-nml-action="count++">Increment</button>
+<button data-nml-action="count++" data-nml-event="click">Increment</button>
 ```
 
 **Supported forms (v1):**
@@ -118,13 +118,85 @@ button.on:click("count++") | Increment
 - Only **one** state action per element is supported in v1.
 - Referencing declared state in an unsupported form, or assigning to a name that isn't declared, is a parse error with a fix hint (e.g. `Did you mean to declare @state.count(<initial value>)?`).
 
-> ⚠️ **The runtime is a future PR.** `data-nml-action` attributes are inert until the client runtime lands — today, use HTMX or Alpine for live interactivity.
+### Client Runtime — `@nml-lang/state`
+
+`data-nml-action` attributes are live. The runtime (`@nml-lang/state`,
+`dist/index.js` ~7.9KB) mounts a view's `render` function onto the
+server-rendered page: it listens for `click`, `change`, and `submit` on
+`document`, finds the closest `[data-nml-action]`, applies the action to
+the current state, re-renders, and patches the DOM. No VDOM, no store, no
+effects — state is a plain object, and every mutation goes through one
+pure function, `applyAction(state, action)`, which returns a new state
+object (it never mutates its input). An action that fails (unknown name,
+unsupported form, type error such as `++` on a non-number) throws a
+`NmlStateError` carrying the action string, a `code`
+(`unknown-state` | `unsupported-form` | `type-error`), and a `reason`;
+a failing action is logged and the state is left untouched.
+
+**Full pages — auto-mount (vite-plugin).** If a file with `@state` is a
+full page (a top-level `html` element or `doctype.html`), the vite-plugin
+emits an `import { mountNmlState } from "@nml-lang/state"` and a
+browser-only auto-mount block (`typeof document !== "undefined"`) that
+reads the `script[data-nml-state]` payload for the initial state and
+calls `mountNmlState({ render, initial })`. The page must load the view
+module in the browser (for example, a client entry that imports it) for
+the auto-mount to run. Apps using `@state` need `@nml-lang/state`
+installed. The emitted view module uses top-level await, so a Vite build
+target must support it (e.g. `build: { target: "esnext" }`).
+
+**Fragments — manual mount.** A fragment file with `@state` (no top-level
+`html`) gets state seeding and the payload, but **no auto-mount** — the
+app mounts it explicitly:
+
+```ts
+import { mountNmlState } from "@nml-lang/state";
+import renderCounter from "./views/counter.nml";
+
+const mount = mountNmlState({
+  render: renderCounter,
+  initial: { count: 0 },
+  root: document.getElementById("counter")!,
+});
+// mount.getState() — a copy of the current state
+// mount.setState({ count: 5 }) — merge + re-render
+// mount.destroy() — remove all listeners (safe to call twice)
+```
+
+Re-mounting the same root destroys the previous mount first, so HMR
+re-imports never double-fire listeners.
+
+**Events.** The runtime handles `click`, `change`, and `submit` only, and
+only when the event type matches the element's `data-nml-event` (default
+`"click"` when the attribute is absent). `preventDefault()` is called on
+handled actions. `input` events are **not** wired in v1, and there is no
+`$value` / input-value binding — an action can only compute from current
+state and literals.
+
+**DOM patching.** After a handled action, the fresh HTML is parsed with
+`DOMParser`. If it contains a `<body>`, the new body's children replace
+`document.body`'s children (keeping `<head>` intact); otherwise
+`root.innerHTML` is set. Full-page replacement (rather than a targeted
+update) is the deliberate v1 strategy: it is simple, it cannot drift out
+of sync with `render()`, and it keeps the runtime small. DOM morphing is
+the follow-up.
+
+**Focus.** Before patching, the runtime records `document.activeElement`'s
+`id` (if any) and restores focus to the element with that id afterwards.
+Inputs without an `id` can still lose focus/cursor on re-render — a known
+v1 limit; give interactive inputs an `id`, or wait for DOM morphing.
+
+**HMR resets state (v1 limit).** A hot update re-mounts with initial
+values; state changed since page load is lost. Listeners never
+double-fire (see re-mount above), but the values reset.
 
 ### Known v1 Limits
 
 - `@if` conditions are still context paths + truthiness — no comparison expressions (`count > 5` is not supported).
 - State is file-level only — no per-instance component state, no shared/global store.
 - A partial's own `@state` provides defaults that inherited parent context can override; its state is not re-serialised — the SSR payload is emitted once, for the top-level document.
+- No `$value` / input-value binding; `input` events are not wired.
+- Focus/cursor can be lost in inputs without an `id` on re-render (see Focus above).
+- HMR resets state to initial values (see HMR above).
 
 ---
 

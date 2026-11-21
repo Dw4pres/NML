@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "moduleResolution": "node16",
+    "module": "node16"
+    // Comments are kept deliberately: `removeComments` also strips JSDoc
+    // from the .d.ts, which agents and editors read. The built dist is
+    // ~13KB raw (was 7.9KB with comments stripped) — still tiny, and the
+    // consumer's bundler minifies it anyway. Do not re-add removeComments
+    // to chase the old 8KB budget.
+  },
+  "include": ["src/**/*"],
+  "exclude": ["tests/**/*", "dist"]
+}
